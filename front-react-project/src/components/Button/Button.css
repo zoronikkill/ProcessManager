@@ -1,0 +1,29 @@
+.button {
+    background-color: #6a0dad;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin: 0 5px;
+}
+  
+.button:hover {
+    background-color: #4b2277;
+}
+  
+.main-button {
+    background-color: #ccc;
+    color: #333;
+    padding: 15px 30px;
+    margin: 10px 0;
+    font-size: 18px;
+    text-decoration: none;
+    border-radius: 5px;
+    width: 250px;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+  
+.main-button:hover {
+    background-color: #b0b0b0;
+}
