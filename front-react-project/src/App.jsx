@@ -3,13 +3,21 @@ import './App.css';
 import Header from './components/Header/Header';
 import MainContent from './components/MainContent/MainContent';
 import Footer from './components/Footer/Footer';
+import CommentAdd from './Features/CommentAdd/CommentAdd';
+import FiltersBtn from './Features/FiltersBtn/FiltersBtn';
+import Accardion from './Features/Acardion/Acardion';
 
 function App() {
   return (
-    <div className="container">
+    <div>
       <Header />
-      <MainContent />
-      <Footer />
+      <div className="container">
+        <MainContent />
+        <Accardion />
+        <FiltersBtn />
+        <CommentAdd />
+      </div>
+        <Footer />
     </div>
   );
 }

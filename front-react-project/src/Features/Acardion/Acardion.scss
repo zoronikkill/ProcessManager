@@ -1,0 +1,103 @@
+.equipment-item__toggle {
+  display: flex;
+  gap: 15px;
+}
+.equipment-item__toggle-text {
+  color: var(--vt-c-brown-light);
+  font-family: "Montserrat-Medium", sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 138%;
+}
+.equipment-item__toggle-icon {
+  transition: transform 0.3s ease-in-out;
+  width: 8px;
+}
+.equipment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.equipment-item__content-name {
+  color: var(--vt-c-brown-light);
+  font-family: "Montserrat-Bold", sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-transform: uppercase;
+
+  margin-top: 35px;
+}
+.equipment-item__content-label {
+  font-family: "Montserrat-Medium", sans-serif;
+  color: var(--vt-c-gray-green);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+
+  margin-top: 15px;
+}
+.equipment-item__content-price {
+  font-family: "Montserrat-Medium", sans-serif;
+  color: var(--vt-c-brown-light);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 188%;
+}
+.equipment-item__content-availability {
+  font-family: "Montserrat-Medium", sans-serif;
+  color: var(--vt-c-brown-light);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+
+  margin-top: 18px;
+}
+.equipment-item__content-description {
+  font-family: "Montserrat-Medium", sans-serif;
+  color: var(--vt-c-brown-light);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 188%;
+
+  margin-top: 29px;
+}
+.equipment-item__content-image {
+  max-width: 283px;
+  max-height: 283px;
+  padding: 25px 22px 24px 22px;
+  background-color: aqua;
+  transition: max-width 0.3s, max-height 0.3s, padding 0.3s;
+}
+.equipment-item__content {
+  width: 100%;
+  max-width: 348px;
+  height: 414px;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.equipment-item__input {
+  display: none;
+}
+.equipment-item__input:checked ~ {
+  .equipment-item__toggle .equipment-item__toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  .equipment-item__content .equipment-item__content-image {
+    max-width: 84.49px;
+    max-height: 86.23px;
+
+    padding: 13px 14.51px 13.77px 14px;
+  }
+}
