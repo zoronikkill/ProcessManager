@@ -10,12 +10,12 @@ const FiltersBtn = () => {
     }
     return (
         <div>
-            <button onClick={onOpenOrCloseModalPopOutRoot} className={style.filter}>я открываю модалку</button>
+            <button onClick={onOpenOrCloseModalPopOutRoot} className={style.filter}>фильтр</button>
             {
                 modalPopOutRootIsOpen ?
                     <ModalPopOutRoot>
-                        <Button text={"я ModalPopOutRoot"} className="main-button"/>
-                        <Button text={"я ModalPopOutRoot"} className="main-button"/>
+                        <Button text={"сортировка 1"} className="main-button"/>
+                        <Button text={"сортировка 2"} className="main-button"/>
                     </ModalPopOutRoot>
                 :null
             }

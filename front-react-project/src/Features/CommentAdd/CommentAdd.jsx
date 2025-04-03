@@ -16,12 +16,12 @@ function CommentAdd() {
     }
   return (
     <div className={style.comment__container}>
-        <h1>клёвые комменты</h1>
+        <h1>комментарии</h1>
         <input type="text" value={newComment} 
         onChange={(e)=> setNewCommet(e.target.value)}
         placeholder='go comment'/>
         <button onClick={onAddComment}>
-            добавить комент
+            добавить коментарий
         </button>
         <div className="coments">
             {comments.map((coment, index)=>(

@@ -7,13 +7,11 @@ const Acardion = () => {
         <input type="checkbox" class="equipment-item__input" id="inputId" />
         <div class="equipment-item__content">
           <div class="equipment-item__content-image" alt="equipment" ></div>
-          <p class="equipment-item__content-name"> name </p>
-          <p class="equipment-item__content-label">Стоимость аренды</p>
-          <p class="equipment-item__content-price">от  cost  руб.</p>
-          <p class="equipment-item__content-description">
-            description
+          <p class='equipment-item__toggle-text'>
+            Длиииииииииииииииииииииииииииииииииииииииииииииииииииииииииии
+            ииииииииииииииииииииииииииииииииииииииииииииииииииииииииииииии
+            нный текст
           </p>
-          <p class="equipment-item__content-availability"> availability </p>
         </div>
         <label htmlFor="inputId" class="equipment-item__toggle"
           ><p class="equipment-item__toggle-text">Подробнее</p>
