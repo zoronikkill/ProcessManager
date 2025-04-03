@@ -1,16 +1,18 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import ProjectEditor from './pages/ProjectEditor';
 import './App.css';
-import Header from './components/Header/Header';
-import MainContent from './components/MainContent/MainContent';
-import Footer from './components/Footer/Footer';
 
 function App() {
   return (
-    <div className="container">
-      <Header />
-      <MainContent />
-      <Footer />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/editor" element={<ProjectEditor />} />
+        <Route path="/projects" element={<div>Страница проектов (в разработке)</div>} />
+      </Routes>
+    </Router>
   );
 }
 

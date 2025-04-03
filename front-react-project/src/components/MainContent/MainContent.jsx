@@ -1,7 +1,9 @@
+import React from 'react';
 import './MainContent.css';
 import Button from '../Button/Button';
+import ProjectConstructor from '../ProjectConstructor/ProjectConstructor';
 
-function MainContent() {
+const MainContent = () => {
   return (
     <main>
       <div className="div-button">
@@ -9,11 +11,7 @@ function MainContent() {
         <Button href="#" text="Поиск проекта" />
         <Button href="#" text="Справочники" />
       </div>
-      <div className="button-container">
-        <Button href="#" text="Создать проект" className="main-button" />
-        <Button href="#" text="Проекты в работе" className="main-button" />
-        <Button href="#" text="Архив проектов" className="main-button" />
-      </div>
+      <ProjectConstructor />
     </main>
   );
 };

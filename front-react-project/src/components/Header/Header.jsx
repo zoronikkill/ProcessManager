@@ -1,17 +1,17 @@
 import './Header.css';
-import Button from '../Button/Button';
+import { Link } from 'react-router-dom';
 
 function Header() {
   return (
     <header>
       <div className="profile-icon">
-        <img src="../../../profile-icon.png" alt="Profile" />
+        <img src="profile-icon.png" alt="Profile" />
       </div>
       <div className="nav">
-        <div className="title">Конструктор проектов</div>
+        <Link to="/" className="title">Конструктор проектов</Link>
       </div>
     </header>
   );
-};
+}
 
 export default Header;
