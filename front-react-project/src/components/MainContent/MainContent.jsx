@@ -1,5 +1,5 @@
 import React from 'react';
-import './MainContent.module.scss';
+import './MainContent.css';
 import Button from '../Button/Button';
 import ProjectConstructor from '../ProjectConstructor/ProjectConstructor';
 

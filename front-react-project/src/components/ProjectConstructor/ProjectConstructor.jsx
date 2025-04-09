@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import './ProjectConstructor.module.scss';
+import './ProjectConstructor.css';
 
 function ProjectConstructor() {
   const [initialTasks] = useState([

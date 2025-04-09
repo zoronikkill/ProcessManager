@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './Button.module.scss';
+import './Button.css';
 
 const Button = ({ href, text, className = '', to }) => {
   const buttonClass = className ? `${className} button` : 'button';

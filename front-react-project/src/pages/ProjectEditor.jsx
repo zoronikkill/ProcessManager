@@ -3,7 +3,7 @@ import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import ProjectConstructor from '../components/ProjectConstructor/ProjectConstructor';
 import { Link } from 'react-router-dom';
-import './ProjectEditor.module.scss';
+import './ProjectEditor.css';
 
 const ProjectEditor = () => {
     return (
