@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import './ProjectConstructor.css';
+import Button from '../Button/Button';
 
 function ProjectConstructor() {
-  const [initialTasks] = useState([
+  const [initialTasks, setInitialTasks] = useState([
     { id: 1, name: 'Анализ требований' },
     { id: 2, name: 'Проектирование' },
     { id: 3, name: 'Разработка' }
@@ -11,8 +12,23 @@ function ProjectConstructor() {
   const [projectAreaTasks, setProjectAreaTasks] = useState([]);
   const [connections, setConnections] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [newTaskName, setNewTaskName] = useState('');
+  const [showTaskForm, setShowTaskForm] = useState(false);
   const projectAreaRef = useRef(null);
   const taskElements = useRef({});
+
+  function handleAddNewTask() {
+    if (newTaskName.trim() === '') return;
+    
+    const newTask = {
+      id: Date.now(),
+      name: newTaskName.trim()
+    };
+
+    setInitialTasks([...initialTasks, newTask]);
+    setNewTaskName('');
+    setShowTaskForm(false);
+  };
 
   function getNewPosition() {
     const container = projectAreaRef.current;
@@ -236,7 +252,43 @@ function ProjectConstructor() {
   return (
     <div className="project-constructor">
       <div className="tasks-panel">
-        <h3>Доступные задачи</h3>
+        <div className="tasks-panel-header">
+          <h3>Доступные задачи</h3>
+          <Button 
+            text="+ Добавить задачу" 
+            className="small add-button" 
+            onClick={() => setShowTaskForm(true)}
+          />
+        </div>
+  
+        {showTaskForm && (
+          <div className="task-form">
+            <input
+              type="text"
+              value={newTaskName}
+              onChange={(e) => setNewTaskName(e.target.value)}
+              placeholder="Введите название задачи"
+              className="task-input"
+              onKeyDown={(e) => e.key === 'Enter' && handleAddNewTask()}
+            />
+            <div className="form-buttons">
+              <Button 
+                text="Добавить" 
+                className="small confirm-button" 
+                onClick={handleAddNewTask}
+              />
+              <Button 
+                text="Отмена" 
+                className="small cancel-button" 
+                onClick={() => {
+                  setNewTaskName('');
+                  setShowTaskForm(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
+  
         <div className="tasks-list">
           {initialTasks.map(task => (
             <div

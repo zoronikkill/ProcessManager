@@ -27,3 +27,15 @@
 .main-button:hover {
     background-color: #b0b0b0;
 }
+.small {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+  
+.secondary {
+  background-color: #6c757d;
+}
+  
+.secondary:hover {
+  background-color: #5a6268;
+}

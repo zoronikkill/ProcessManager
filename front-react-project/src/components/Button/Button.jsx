@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Button.css';
 
-const Button = ({ href, text, className = '', to }) => {
+const Button = ({ href, text, className = '', to, onClick }) => {
   const buttonClass = className ? `${className} button` : 'button';
   
   if (to) {
@@ -14,9 +14,9 @@ const Button = ({ href, text, className = '', to }) => {
   }
   
   return (
-    <a href={href} className={buttonClass}>
+    <button className={buttonClass} onClick={onClick}>
       {text}
-    </a>
+    </button>
   );
 };
 

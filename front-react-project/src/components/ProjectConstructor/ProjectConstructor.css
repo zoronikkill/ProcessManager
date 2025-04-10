@@ -26,6 +26,13 @@
   box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
 }
 
+.tasks-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
 .tasks-list {
   display: flex;
   flex-direction: column;
@@ -97,6 +104,47 @@
   background-color: #e0e0e0;
   cursor: grab;
 }
+
+.task-form {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+}
+
 .connections line {
   transition: all 0.2s ease-out;
+}
+
+.task-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.add-button {
+  background-color: #5c2f91;
+  color: white;
+}
+
+.add-button:hover {
+  background-color: #4a2475;
+}
+
+.confirm-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+  color: white;
 }
