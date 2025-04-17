@@ -1,68 +1,89 @@
-import React, { useState, useRef } from 'react';
-import './ProjectConstructor.css';
-import Button from '../Button/Button';
+import React, { useState, useRef, useEffect } from "react";
+import "./ProjectConstructor.css";
+import Button from "../Button/Button";
+import { useParams } from 'react-router-dom';
 
 function ProjectConstructor() {
   const [initialTasks, setInitialTasks] = useState([
-    { id: 1, name: 'Анализ требований' },
-    { id: 2, name: 'Проектирование' },
-    { id: 3, name: 'Разработка' }
+    { id: 1, name: "Анализ требований" },
+    { id: 2, name: "Проектирование" },
+    { id: 3, name: "Разработка" },
   ]);
 
   const [projectAreaTasks, setProjectAreaTasks] = useState([]);
   const [connections, setConnections] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [newTaskName, setNewTaskName] = useState('');
+  const [newTaskName, setNewTaskName] = useState("");
   const [showTaskForm, setShowTaskForm] = useState(false);
   const projectAreaRef = useRef(null);
   const taskElements = useRef({});
+  const { projectId } = useParams();
+
+  useEffect(() => {
+    if (projectId) {
+      loadProject(projectId);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (projectAreaTasks.length > 0 && connections.length > 0) {
+      const timer = setTimeout(() => {
+        setConnections([...connections]);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [projectAreaTasks]);
 
   function handleAddNewTask() {
-    if (newTaskName.trim() === '') return;
-    
+    if (newTaskName.trim() === "") return;
+
     const newTask = {
       id: Date.now(),
-      name: newTaskName.trim()
+      name: newTaskName.trim(),
     };
 
     setInitialTasks([...initialTasks, newTask]);
-    setNewTaskName('');
+    setNewTaskName("");
     setShowTaskForm(false);
-  };
+  }
 
   function getNewPosition() {
     const container = projectAreaRef.current;
     if (!container) return { x: 20, y: 20 };
-    
+
     return {
       x: 20 + (projectAreaTasks.length % 5) * 220,
-      y: 20 + Math.floor(projectAreaTasks.length / 5) * 120
+      y: 20 + Math.floor(projectAreaTasks.length / 5) * 120,
     };
-  };
+  }
 
   function handleDragStart(task, e) {
-    e.dataTransfer.setData('task', JSON.stringify(task));
+    e.dataTransfer.setData("task", JSON.stringify(task));
     setDragging(true);
   }
 
   function handleDrop(e) {
     e.preventDefault();
-    const task = JSON.parse(e.dataTransfer.getData('task'));
-    
+    const task = JSON.parse(e.dataTransfer.getData("task"));
+
     const newPos = getNewPosition();
-    setProjectAreaTasks([...projectAreaTasks, {
-      ...task,
-      id: Date.now(),
-      taskType: task.id,
-      ...newPos,
-      deadline: '',
-      assignee: ''
-    }]);
+    setProjectAreaTasks([
+      ...projectAreaTasks,
+      {
+        ...task,
+        id: Date.now(),
+        taskType: task.id,
+        ...newPos,
+        deadline: "",
+        assignee: "",
+      },
+    ]);
   }
 
   function handleDragOver(e) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
   }
 
   function handleTaskMouseDown(taskId, e) {
@@ -74,55 +95,62 @@ function ProjectConstructor() {
     const taskRect = taskElement.getBoundingClientRect();
     const offset = {
       x: startPos.x - taskRect.left,
-      y: startPos.y - taskRect.top
+      y: startPos.y - taskRect.top,
     };
-  
+
     let isDragging = false;
     let moved = false;
-  
+
     function handleMouseMove(e) {
       if (e.clientX !== startPos.x || e.clientY !== startPos.y) {
         moved = true;
       }
-  
-      if (!isDragging && (
-        Math.abs(e.clientX - startPos.x) > 3 ||
-        Math.abs(e.clientY - startPos.y) > 3
-      )) {
+
+      if (
+        !isDragging &&
+        (Math.abs(e.clientX - startPos.x) > 3 ||
+          Math.abs(e.clientY - startPos.y) > 3)
+      ) {
         isDragging = true;
-        taskElement.classList.add('dragging');
+        taskElement.classList.add("dragging");
       }
-  
+
       if (isDragging) {
-        const newX = Math.max(0, Math.min(
-          e.clientX - containerRect.left - offset.x,
-          containerRect.width - taskRect.width
-        ));
-        const newY = Math.max(0, Math.min(
-          e.clientY - containerRect.top - offset.y,
-          containerRect.height - taskRect.height
-        ));
-  
-        setProjectAreaTasks(prev => 
-          prev.map(t => t.id === taskId ? { ...t, x: newX, y: newY } : t)
+        const newX = Math.max(
+          0,
+          Math.min(
+            e.clientX - containerRect.left - offset.x,
+            containerRect.width - taskRect.width
+          )
+        );
+        const newY = Math.max(
+          0,
+          Math.min(
+            e.clientY - containerRect.top - offset.y,
+            containerRect.height - taskRect.height
+          )
+        );
+
+        setProjectAreaTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? { ...t, x: newX, y: newY } : t))
         );
       }
     }
-  
+
     function handleMouseUp() {
       if (moved === true) {
-        const task = projectAreaTasks.find(t => t.id === taskId);
-        setSelectedTask(prev => prev?.id === task.id ? null : task);
+        const task = projectAreaTasks.find((t) => t.id === taskId);
+        setSelectedTask((prev) => (prev?.id === task.id ? null : task));
         moved = false;
       }
-  
-      taskElement.classList.remove('dragging');
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+
+      taskElement.classList.remove("dragging");
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
   }
 
   function handleTaskSelect(task) {
@@ -131,10 +159,13 @@ function ProjectConstructor() {
         setSelectedTask(null);
         return;
       }
-      setConnections([...connections, {
-        from: selectedTask.id,
-        to: task.id
-      }]);
+      setConnections([
+        ...connections,
+        {
+          from: selectedTask.id,
+          to: task.id,
+        },
+      ]);
       setSelectedTask(null);
     } else {
       setSelectedTask(task);
@@ -142,8 +173,8 @@ function ProjectConstructor() {
   }
 
   function handleTaskUpdate(taskId, field, value) {
-    setProjectAreaTasks(function(prevTasks) {
-      return prevTasks.map(function(task) {
+    setProjectAreaTasks(function (prevTasks) {
+      return prevTasks.map(function (task) {
         if (task.id === taskId) {
           return { ...task, [field]: value };
         }
@@ -156,57 +187,58 @@ function ProjectConstructor() {
     const fromElement = taskElements.current[`task-${fromTask.id}`];
     const toElement = taskElements.current[`task-${toTask.id}`];
 
-    if (!fromElement || !toElement) return { fromPoint: { x: 0, y: 0 }, toPoint: { x: 0, y: 0 } };
+    if (!fromElement || !toElement)
+      return { fromPoint: { x: 0, y: 0 }, toPoint: { x: 0, y: 0 } };
 
     const fromRect = fromElement.getBoundingClientRect();
     const toRect = toElement.getBoundingClientRect();
 
     const fromCenter = {
-        x: fromRect.left + fromRect.width / 2,
-        y: fromRect.top + fromRect.height / 2
+      x: fromRect.left + fromRect.width / 2,
+      y: fromRect.top + fromRect.height / 2,
     };
     const toCenter = {
-        x: toRect.left + toRect.width / 2,
-        y: toRect.top + toRect.height / 2
+      x: toRect.left + toRect.width / 2,
+      y: toRect.top + toRect.height / 2,
     };
 
     function getEdgePoint(rect, targetX, targetY, borderRadius = 2) {
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        const dx = targetX - centerX;
-        const dy = targetY - centerY;
-        const angle = Math.atan2(dy, dx);
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
-        const halfWidth = rect.width / 2 - borderRadius;
-        const halfHeight = rect.height / 2 - borderRadius;
+      const dx = targetX - centerX;
+      const dy = targetY - centerY;
+      const angle = Math.atan2(dy, dx);
 
-        const absAngle = Math.abs(angle);
-        let x, y;
+      const halfWidth = rect.width / 2 - borderRadius;
+      const halfHeight = rect.height / 2 - borderRadius;
 
-        if (absAngle <= Math.PI / 4 || absAngle >= (3 * Math.PI) / 4) {
-            const direction = dx > 0 ? 1 : -1;
-            x = centerX + direction * (rect.width / 2);
-            y = centerY + direction * (rect.width / 2) * Math.tan(angle);
+      const absAngle = Math.abs(angle);
+      let x, y;
 
-            if (Math.abs(y - centerY) > halfHeight) {
-                const yDirection = dy > 0 ? 1 : -1;
-                y = centerY + yDirection * halfHeight;
-                x = centerX + yDirection * halfHeight / Math.tan(angle);
-            }
-        } else {
-            const direction = dy > 0 ? 1 : -1;
-            y = centerY + direction * (rect.height / 2);
-            x = centerX + direction * (rect.height / 2) / Math.tan(angle);
+      if (absAngle <= Math.PI / 4 || absAngle >= (3 * Math.PI) / 4) {
+        const direction = dx > 0 ? 1 : -1;
+        x = centerX + direction * (rect.width / 2);
+        y = centerY + direction * (rect.width / 2) * Math.tan(angle);
 
-            if (Math.abs(x - centerX) > halfWidth) {
-                const xDirection = dx > 0 ? 1 : -1;
-                x = centerX + xDirection * halfWidth;
-                y = centerY + xDirection * halfWidth * Math.tan(angle);
-            }
+        if (Math.abs(y - centerY) > halfHeight) {
+          const yDirection = dy > 0 ? 1 : -1;
+          y = centerY + yDirection * halfHeight;
+          x = centerX + (yDirection * halfHeight) / Math.tan(angle);
         }
+      } else {
+        const direction = dy > 0 ? 1 : -1;
+        y = centerY + direction * (rect.height / 2);
+        x = centerX + (direction * (rect.height / 2)) / Math.tan(angle);
 
-        return { x, y };
+        if (Math.abs(x - centerX) > halfWidth) {
+          const xDirection = dx > 0 ? 1 : -1;
+          x = centerX + xDirection * halfWidth;
+          y = centerY + xDirection * halfWidth * Math.tan(angle);
+        }
+      }
+
+      return { x, y };
     }
 
     const fromPoint = getEdgePoint(fromRect, toCenter.x, toCenter.y);
@@ -214,25 +246,29 @@ function ProjectConstructor() {
 
     const containerRect = projectAreaRef.current.getBoundingClientRect();
     return {
-        fromPoint: {
-            x: fromPoint.x - containerRect.left,
-            y: fromPoint.y - containerRect.top
-        },
-        toPoint: {
-            x: toPoint.x - containerRect.left,
-            y: toPoint.y - containerRect.top
-        }
+      fromPoint: {
+        x: fromPoint.x - containerRect.left,
+        y: fromPoint.y - containerRect.top,
+      },
+      toPoint: {
+        x: toPoint.x - containerRect.left,
+        y: toPoint.y - containerRect.top,
+      },
     };
   }
 
   function renderConnections() {
     return connections.map((conn, index) => {
-      const fromTask = projectAreaTasks.find(t => t.id === conn.from);
-      const toTask = projectAreaTasks.find(t => t.id === conn.to);
-      
+      const fromTask = projectAreaTasks.find((t) => t.id === conn.from);
+      const toTask = projectAreaTasks.find((t) => t.id === conn.to);
+
       if (!fromTask || !toTask) return null;
 
-      const { fromPoint, toPoint } = calculateConnectionPoints(fromTask, toTask, taskElements);
+      const { fromPoint, toPoint } = calculateConnectionPoints(
+        fromTask,
+        toTask,
+        taskElements
+      );
 
       return (
         <line
@@ -249,18 +285,65 @@ function ProjectConstructor() {
     });
   }
 
+  function saveProject() {
+    const projectName = prompt("Введите название проекта:");
+    if (!projectName) return;
+
+    const newProject = {
+      id: crypto.randomUUID(),
+      title: projectName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      data: {
+        tasks: projectAreaTasks,
+        connections: connections,
+        settings: {},
+      },
+    };
+    const existingProjects = JSON.parse(
+      localStorage.getItem("projects") || "[]"
+    );
+    localStorage.setItem(
+      "projects",
+      JSON.stringify([...existingProjects, newProject])
+    );
+    alert("Проект сохранен!");
+  }
+
+  const loadProject = (projectId) => {
+  const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+  const project = projects.find(p => p.id === projectId);
+  
+  if (project) {
+    setProjectAreaTasks([]);
+    setConnections([]);
+
+    setTimeout(() => {
+      setProjectAreaTasks(project.data.tasks || []);
+      setConnections(project.data.connections || []);
+    }, 0);
+  }
+  };
+
   return (
     <div className="project-constructor">
+      <div className="constructor-toolbar">
+        <Button
+          text="Сохранить проект"
+          onClick={saveProject}
+          className="save-button"
+        />
+      </div>
       <div className="tasks-panel">
         <div className="tasks-panel-header">
           <h3>Доступные задачи</h3>
-          <Button 
-            text="+ Добавить задачу" 
-            className="small add-button" 
+          <Button
+            text="+ Добавить задачу"
+            className="small add-button"
             onClick={() => setShowTaskForm(true)}
           />
         </div>
-  
+
         {showTaskForm && (
           <div className="task-form">
             <input
@@ -269,28 +352,28 @@ function ProjectConstructor() {
               onChange={(e) => setNewTaskName(e.target.value)}
               placeholder="Введите название задачи"
               className="task-input"
-              onKeyDown={(e) => e.key === 'Enter' && handleAddNewTask()}
+              onKeyDown={(e) => e.key === "Enter" && handleAddNewTask()}
             />
             <div className="form-buttons">
-              <Button 
-                text="Добавить" 
-                className="small confirm-button" 
+              <Button
+                text="Добавить"
+                className="small confirm-button"
                 onClick={handleAddNewTask}
               />
-              <Button 
-                text="Отмена" 
-                className="small cancel-button" 
+              <Button
+                text="Отмена"
+                className="small cancel-button"
                 onClick={() => {
-                  setNewTaskName('');
+                  setNewTaskName("");
                   setShowTaskForm(false);
                 }}
               />
             </div>
           </div>
         )}
-  
+
         <div className="tasks-list">
-          {initialTasks.map(task => (
+          {initialTasks.map((task) => (
             <div
               key={task.id}
               className="task"
@@ -302,23 +385,23 @@ function ProjectConstructor() {
           ))}
         </div>
       </div>
-      
-      <div 
+
+      <div
         ref={projectAreaRef}
         className="project-area"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
         <h3>Область проекта</h3>
-        {projectAreaTasks.map(task => (
+        {projectAreaTasks.map((task) => (
           <div
             key={task.id}
-            ref={el => taskElements.current[`task-${task.id}`] = el}
-            className={`task ${selectedTask?.id === task.id ? 'selected' : ''}`}
-            style={{ 
+            ref={(el) => (taskElements.current[`task-${task.id}`] = el)}
+            className={`task ${selectedTask?.id === task.id ? "selected" : ""}`}
+            style={{
               left: `${task.x}px`,
               top: `${task.y}px`,
-              position: 'absolute'
+              position: "absolute",
             }}
             onMouseDown={(e) => handleTaskMouseDown(task.id, e)}
             onClick={() => handleTaskSelect(task)}
@@ -330,7 +413,9 @@ function ProjectConstructor() {
                 <input
                   type="date"
                   value={task.deadline}
-                  onChange={(e) => handleTaskUpdate(task.id, 'deadline', e.target.value)}
+                  onChange={(e) =>
+                    handleTaskUpdate(task.id, "deadline", e.target.value)
+                  }
                 />
               </div>
               <div>
@@ -338,14 +423,25 @@ function ProjectConstructor() {
                 <input
                   type="text"
                   value={task.assignee}
-                  onChange={(e) => handleTaskUpdate(task.id, 'assignee', e.target.value)}
+                  onChange={(e) =>
+                    handleTaskUpdate(task.id, "assignee", e.target.value)
+                  }
                 />
               </div>
             </div>
           </div>
         ))}
-        
-        <svg className="connections" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+
+        <svg
+          className="connections"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        >
           {renderConnections()}
           <defs>
             <marker
