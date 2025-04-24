@@ -1,21 +1,19 @@
 import React from 'react';
-import './App.css';
-import Header from './components/Header/Header';
+import style from './App.module.scss'
 // import MainContent from './components/MainContent/MainContent';
+// import CommentAdd from './Features/CommentAdd/CommentAdd';
+// import FiltersBtn from './Features/FiltersBtn/FiltersBtn';
+// import Accardion from './Features/Acardion/Acardion';
+import Header from './components/header/Header';
+import Task from './components/Task/Task';
 import Footer from './components/Footer/Footer';
-import CommentAdd from './Features/CommentAdd/CommentAdd';
-import FiltersBtn from './Features/FiltersBtn/FiltersBtn';
-import Accardion from './Features/Acardion/Acardion';
+
 
 function App() {
   return (
-    <div>
-      <Header />
-      <div className="container">
-        <Accardion />
-        <FiltersBtn />
-        <CommentAdd />
-      </div>
+    <div className={style.body}>
+      <Header title="Описание задачи" />
+      <Task />
       <Footer />
     </div>
   );

@@ -1,0 +1,42 @@
+.header {
+  width: 100%;
+  height: 74px;
+  background-color: #5c2f91;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+
+.app_name {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.window_title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20px;
+  font-weight: 500;
+  color: white;
+  background-color: black;
+  padding: 10px;
+  border-radius: 15px;
+}
+
+.profile {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profile img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+}

@@ -1,0 +1,27 @@
+footer {
+  width: 100%;
+  height: 74px;
+  background-color: #5c2f91;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 16px;
+}
+
+.support_phone,
+.support_email,
+.support_phone:visited,
+.support_email:visited,
+.support_phone:focus,
+.support_email:focus {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.support_phone:hover,
+.support_email:hover {
+  text-decoration: underline;
+}

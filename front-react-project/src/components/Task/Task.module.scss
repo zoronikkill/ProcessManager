@@ -1,0 +1,9 @@
+.task__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  flex-grow: 1;
+  padding: 16px;
+  min-height: 100vh;
+}
