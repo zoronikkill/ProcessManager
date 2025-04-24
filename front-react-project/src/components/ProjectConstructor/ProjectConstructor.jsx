@@ -18,6 +18,15 @@ function ProjectConstructor() {
   const projectAreaRef = useRef(null);
   const taskElements = useRef({});
   const { projectId } = useParams();
+  const [employees, setEmployees] = useState(
+    JSON.parse(localStorage.getItem('employees')) || []
+  );
+
+  useEffect(() => {
+    const handleSave = () => saveProject();
+    document.addEventListener('saveProject', handleSave);
+    return () => document.removeEventListener('saveProject', handleSave);
+  }, [projectAreaTasks, connections]);
 
   useEffect(() => {
     if (projectId) {
@@ -34,6 +43,12 @@ function ProjectConstructor() {
       return () => clearTimeout(timer);
     }
   }, [projectAreaTasks]);
+
+  function handleSaveEmployee (employee){
+    const updatedEmployees = [...employees, employee];
+    setEmployees(updatedEmployees);
+    localStorage.setItem('employees', JSON.stringify(updatedEmployees));
+  };
 
   function handleAddNewTask() {
     if (newTaskName.trim() === "") return;
@@ -286,9 +301,9 @@ function ProjectConstructor() {
   }
 
   function saveProject() {
-    const projectName = prompt("Введите название проекта:");
+    const projectName = prompt('Введите название проекта:');
     if (!projectName) return;
-
+  
     const newProject = {
       id: crypto.randomUUID(),
       title: projectName,
@@ -297,17 +312,13 @@ function ProjectConstructor() {
       data: {
         tasks: projectAreaTasks,
         connections: connections,
-        settings: {},
-      },
+        settings: {}
+      }
     };
-    const existingProjects = JSON.parse(
-      localStorage.getItem("projects") || "[]"
-    );
-    localStorage.setItem(
-      "projects",
-      JSON.stringify([...existingProjects, newProject])
-    );
-    alert("Проект сохранен!");
+  
+    const existingProjects = JSON.parse(localStorage.getItem('projects') || []);
+    localStorage.setItem('projects', JSON.stringify([...existingProjects, newProject]));
+    alert(`Проект "${projectName}" сохранен!`);
   }
 
   const loadProject = (projectId) => {
@@ -327,13 +338,6 @@ function ProjectConstructor() {
 
   return (
     <div className="project-constructor">
-      <div className="constructor-toolbar">
-        <Button
-          text="Сохранить проект"
-          onClick={saveProject}
-          className="save-button"
-        />
-      </div>
       <div className="tasks-panel">
         <div className="tasks-panel-header">
           <h3>Доступные задачи</h3>
@@ -420,13 +424,17 @@ function ProjectConstructor() {
               </div>
               <div>
                 <label>Исполнитель:</label>
-                <input
-                  type="text"
+                <select
                   value={task.assignee}
-                  onChange={(e) =>
-                    handleTaskUpdate(task.id, "assignee", e.target.value)
-                  }
-                />
+                  onChange={(e) => handleTaskUpdate(task.id, 'assignee', e.target.value)}
+                >
+                  <option value="">Не назначено</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name} ({emp.position})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

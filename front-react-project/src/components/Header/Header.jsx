@@ -9,6 +9,7 @@ function Header() {
       </div>
       <div className="nav">
         <Link to="/" className="title">Конструктор проектов</Link>
+        <Link to="/employees" className="nav-link">Сотрудники</Link>
       </div>
     </header>
   );

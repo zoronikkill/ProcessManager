@@ -11,7 +11,15 @@ const ProjectEditor = () => {
             <Header />
             <div className="editor-header">
                 <h2>Конструктор проекта</h2>
-                <Link to="/" className="back-button">← На главную</Link>
+                <div className="editor-actions">
+                    <button 
+                        className="save-project-btn"
+                        onClick={() => document.dispatchEvent(new Event('saveProject'))}
+                    >
+                        Сохранить проект
+                    </button>
+                    <Link to="/" className="back-button">← На главную</Link>
+                </div>
             </div>
             <ProjectConstructor />
             <Footer />
