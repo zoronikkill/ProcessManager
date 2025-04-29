@@ -111,21 +111,26 @@
     font-weight: 400;
     cursor: pointer;
     padding: 4px 0;
-}
-
-/* Удаляем старый стиль .task-action.active и добавляем новый для иконки */
-.task-action .action-icon.active {
-    background: #5c2f91;
-    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start; /* выравнивание элементов слева */
 }
 
 .action-text {
     flex-grow: 1;
+    width: 150px; /* зафиксированная ширина для надписи */
+}
+
+.info-text {
+    width: 120px; /* зафиксированная ширина для информации */
+    text-align: center;
 }
 
 .action-icon {
     width: 28px;
     height: 28px;
+    aspect-ratio: 1; /* сохраняем квадратную форму */
     background: #F0F0F0;
     border-radius: 50%;
     display: flex;
@@ -134,7 +139,7 @@
     font-size: 16px;
     color: #666;
     transition: all 0.2s ease;
-    margin-left: 8px;
+    margin-left: 8px; /* убран auto, чтобы избежать искажения */
 }
 
 .action-icon:hover {

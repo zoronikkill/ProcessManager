@@ -200,6 +200,11 @@ function ProjectConstructor() {
     );
   }
 
+  // Добавляем функцию для удаления связи по индексу
+  function removeConnection(index) {
+    setConnections(prev => prev.filter((_, i) => i !== index));
+  }
+
   function calculateConnectionPoints(fromTask, toTask) {
     const fromElement = taskElements.current[`task-${fromTask.id}`];
     const toElement = taskElements.current[`task-${toTask.id}`];
@@ -278,23 +283,23 @@ function ProjectConstructor() {
     return connections.map((conn, index) => {
       const fromTask = projectAreaTasks.find((t) => t.id === conn.from);
       const toTask = projectAreaTasks.find((t) => t.id === conn.to);
-
+  
       if (!fromTask || !toTask) return null;
-
+  
       const { fromPoint, toPoint } = calculateConnectionPoints(fromTask, toTask);
-
-      // Используем прямую линию вместо кривой Безье
+  
       const path = `M ${fromPoint.x} ${fromPoint.y} L ${toPoint.x} ${toPoint.y}`;
-
+  
       return (
-        <path
+        <g
           key={index}
-          d={path}
-          stroke="#5c2f91"
-          strokeWidth="2"
-          fill="none"
-          markerEnd="url(#arrowhead)"
-        />
+          onClick={() => removeConnection(index)}
+          style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+          title="Удалить связь"
+        >
+          <path d={path} stroke="transparent" strokeWidth="10" fill="none" />
+          <path d={path} stroke="#5c2f91" strokeWidth="2" fill="none" markerEnd="url(#arrowhead)" />
+        </g>
       );
     });
   }
@@ -406,26 +411,29 @@ function ProjectConstructor() {
             <div className="task-header">{task.name}</div>
             <div className="task-actions">
               <div className="task-action" onClick={(e) => {
-                e.stopPropagation();
-                // Здесь будет логика установки приоритета
+                  e.stopPropagation();
+                  // Логика установки приоритета
               }}>
                 <span className="action-text">Указать приоритет</span>
+                <span className="info-text">{task.priority || 'Без приоритета'}</span>
                 <span className="action-icon">+</span>
               </div>
               <div className="task-action" onClick={(e) => {
-                e.stopPropagation();
-                // Здесь будет логика установки дедлайна
+                  e.stopPropagation();
+                  // Логика установки дедлайна
               }}>
                 <span className="action-text">Установить дедлайн</span>
+                <span className="info-text">{task.deadline || '01/01/2010'}</span>
                 <span className="action-icon calendar">
                   <img src="/calendar.svg" alt="calendar" />
                 </span>
               </div>
               <div className="task-action" onClick={(e) => {
-                e.stopPropagation();
-                // Здесь будет логика назначения исполнителя
+                  e.stopPropagation();
+                  // Логика назначения исполнителя
               }}>
                 <span className="action-text">Назначить исполнителя</span>
+                <span className="info-text">{task.assignee || 'Петров А.В.'}</span>
                 <span className="action-icon">👤</span>
               </div>
             </div>
