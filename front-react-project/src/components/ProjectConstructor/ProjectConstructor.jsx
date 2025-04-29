@@ -21,6 +21,7 @@ function ProjectConstructor() {
   const [employees, setEmployees] = useState(
     JSON.parse(localStorage.getItem('employees')) || []
   );
+  const [dragTimeout, setDragTimeout] = useState(null);
 
   useEffect(() => {
     const handleSave = () => saveProject();
@@ -67,29 +68,39 @@ function ProjectConstructor() {
     const container = projectAreaRef.current;
     if (!container) return { x: 20, y: 20 };
 
+    const containerRect = container.getBoundingClientRect();
+    const gridSize = 20;
+    const tasksInRow = Math.floor((containerRect.width - 40) / 220);
+    
+    const row = Math.floor(projectAreaTasks.length / tasksInRow);
+    const col = projectAreaTasks.length % tasksInRow;
+
     return {
-      x: 20 + (projectAreaTasks.length % 5) * 220,
-      y: 20 + Math.floor(projectAreaTasks.length / 5) * 120,
+      x: 20 + col * 220,
+      y: 20 + row * 120
     };
   }
 
   function handleDragStart(task, e) {
     e.dataTransfer.setData("task", JSON.stringify(task));
-    setDragging(true);
   }
 
   function handleDrop(e) {
     e.preventDefault();
     const task = JSON.parse(e.dataTransfer.getData("task"));
 
-    const newPos = getNewPosition();
+    const rect = projectAreaRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
     setProjectAreaTasks([
       ...projectAreaTasks,
       {
         ...task,
         id: Date.now(),
         taskType: task.id,
-        ...newPos,
+        x,
+        y,
         deadline: "",
         assignee: "",
       },
@@ -113,52 +124,18 @@ function ProjectConstructor() {
       y: startPos.y - taskRect.top,
     };
 
-    let isDragging = false;
-    let moved = false;
+    taskElement.classList.add("dragging");
 
     function handleMouseMove(e) {
-      if (e.clientX !== startPos.x || e.clientY !== startPos.y) {
-        moved = true;
-      }
+      const newX = Math.max(0, Math.min(e.clientX - containerRect.left - offset.x, containerRect.width - taskRect.width));
+      const newY = Math.max(0, Math.min(e.clientY - containerRect.top - offset.y, containerRect.height - taskRect.height));
 
-      if (
-        !isDragging &&
-        (Math.abs(e.clientX - startPos.x) > 3 ||
-          Math.abs(e.clientY - startPos.y) > 3)
-      ) {
-        isDragging = true;
-        taskElement.classList.add("dragging");
-      }
-
-      if (isDragging) {
-        const newX = Math.max(
-          0,
-          Math.min(
-            e.clientX - containerRect.left - offset.x,
-            containerRect.width - taskRect.width
-          )
-        );
-        const newY = Math.max(
-          0,
-          Math.min(
-            e.clientY - containerRect.top - offset.y,
-            containerRect.height - taskRect.height
-          )
-        );
-
-        setProjectAreaTasks((prev) =>
-          prev.map((t) => (t.id === taskId ? { ...t, x: newX, y: newY } : t))
-        );
-      }
+      setProjectAreaTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, x: newX, y: newY } : t))
+      );
     }
 
     function handleMouseUp() {
-      if (moved === true) {
-        const task = projectAreaTasks.find((t) => t.id === taskId);
-        setSelectedTask((prev) => (prev?.id === task.id ? null : task));
-        moved = false;
-      }
-
       taskElement.classList.remove("dragging");
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
@@ -168,37 +145,59 @@ function ProjectConstructor() {
     window.addEventListener("mouseup", handleMouseUp);
   }
 
-  function handleTaskSelect(task) {
+  function handleTaskClick(taskId, connectionType) {
+    const task = projectAreaTasks.find(t => t.id === taskId);
+    if (!task) return;
+
     if (selectedTask) {
       if (selectedTask.id === task.id) {
         setSelectedTask(null);
         return;
       }
+
+      // Определяем from и to в зависимости от типа связи
+      const from = connectionType === 'previous' ? task.id : selectedTask.id;
+      const to = connectionType === 'previous' ? selectedTask.id : task.id;
+
       setConnections([
         ...connections,
-        {
-          from: selectedTask.id,
-          to: task.id,
-        },
+        { from, to }
       ]);
       setSelectedTask(null);
     } else {
-      setSelectedTask(task);
+      setSelectedTask({...task, connectionType});
     }
   }
 
   function handleTaskUpdate(taskId, field, value) {
-    setProjectAreaTasks(function (prevTasks) {
-      return prevTasks.map(function (task) {
-        if (task.id === taskId) {
-          return { ...task, [field]: value };
-        }
-        return task;
-      });
-    });
+    setProjectAreaTasks(prev =>
+      prev.map(task => task.id === taskId ? { ...task, [field]: value } : task)
+    );
   }
 
-  function calculateConnectionPoints(fromTask, toTask, taskElements) {
+  function handleConnectionClick(taskId, connectionType) {
+    const task = projectAreaTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (selectedTask) {
+      if (selectedTask.id === taskId) {
+        setSelectedTask(null);
+        return;
+      }
+
+      // Определяем направление связи на основе типа кнопки
+      const newConnection = connectionType === 'next' 
+        ? { from: selectedTask.id, to: taskId }
+        : { from: taskId, to: selectedTask.id };
+
+      setConnections([...connections, newConnection]);
+      setSelectedTask(null);
+    } else {
+      setSelectedTask({ ...task, connectionType });
+    }
+  }
+
+  function calculateConnectionPoints(fromTask, toTask) {
     const fromElement = taskElements.current[`task-${fromTask.id}`];
     const toElement = taskElements.current[`task-${toTask.id}`];
 
@@ -279,21 +278,18 @@ function ProjectConstructor() {
 
       if (!fromTask || !toTask) return null;
 
-      const { fromPoint, toPoint } = calculateConnectionPoints(
-        fromTask,
-        toTask,
-        taskElements
-      );
+      const { fromPoint, toPoint } = calculateConnectionPoints(fromTask, toTask);
+
+      // Используем прямую линию вместо кривой Безье
+      const path = `M ${fromPoint.x} ${fromPoint.y} L ${toPoint.x} ${toPoint.y}`;
 
       return (
-        <line
+        <path
           key={index}
-          x1={fromPoint.x}
-          y1={fromPoint.y}
-          x2={toPoint.x}
-          y2={toPoint.y}
+          d={path}
           stroke="#5c2f91"
           strokeWidth="2"
+          fill="none"
           markerEnd="url(#arrowhead)"
         />
       );
@@ -316,24 +312,19 @@ function ProjectConstructor() {
       }
     };
   
-    const existingProjects = JSON.parse(localStorage.getItem('projects') || []);
+    const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]');
     localStorage.setItem('projects', JSON.stringify([...existingProjects, newProject]));
     alert(`Проект "${projectName}" сохранен!`);
   }
 
   const loadProject = (projectId) => {
-  const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-  const project = projects.find(p => p.id === projectId);
-  
-  if (project) {
-    setProjectAreaTasks([]);
-    setConnections([]);
-
-    setTimeout(() => {
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+    const project = projects.find(p => p.id === projectId);
+    
+    if (project) {
       setProjectAreaTasks(project.data.tasks || []);
       setConnections(project.data.connections || []);
-    }, 0);
-  }
+    }
   };
 
   return (
@@ -396,46 +387,70 @@ function ProjectConstructor() {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
-        <h3>Область проекта</h3>
+        <h3 className="area-title">Рабочая область</h3>
         {projectAreaTasks.map((task) => (
           <div
             key={task.id}
             ref={(el) => (taskElements.current[`task-${task.id}`] = el)}
-            className={`task ${selectedTask?.id === task.id ? "selected" : ""}`}
+            className={`task ${selectedTask ? 'connection-mode' : ''}`}
             style={{
               left: `${task.x}px`,
               top: `${task.y}px`,
               position: "absolute",
             }}
-            onMouseDown={(e) => handleTaskMouseDown(task.id, e)}
-            onClick={() => handleTaskSelect(task)}
+            onMouseDown={(e) => {
+              // Если есть выбранная задача для связи, обрабатываем клик для создания связи
+              if (selectedTask && selectedTask.id !== task.id) {
+                e.stopPropagation();
+                // Определяем направление связи на основе типа выбранной кнопки
+                const newConnection = selectedTask.connectionType === 'next' 
+                  ? { from: selectedTask.id, to: task.id }
+                  : { from: task.id, to: selectedTask.id };
+
+                setConnections([...connections, newConnection]);
+                setSelectedTask(null);
+                return;
+              }
+              // Иначе обрабатываем перетаскивание
+              handleTaskMouseDown(task.id, e);
+            }}
           >
             <div className="task-header">{task.name}</div>
-            <div className="task-details">
-              <div>
-                <label>Дедлайн:</label>
-                <input
-                  type="date"
-                  value={task.deadline}
-                  onChange={(e) =>
-                    handleTaskUpdate(task.id, "deadline", e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <label>Исполнитель:</label>
-                <select
-                  value={task.assignee}
-                  onChange={(e) => handleTaskUpdate(task.id, 'assignee', e.target.value)}
+            <div className="task-actions">
+                <div className="task-action">
+                    <span className="action-text">Указать приоритет</span>
+                    <span className="action-icon">+</span>
+                </div>
+                <div className="task-action">
+                    <span className="action-text">Установить сроки</span>
+                    <span className="action-icon calendar">
+                        <img src="/calendar.svg" alt="calendar" />
+                    </span>
+                </div>
+                <div className="task-action">
+                    <span className="action-text">Выбрать исполнителя</span>
+                    <span className="action-icon">+</span>
+                </div>
+                <div 
+                    className="task-action"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleConnectionClick(task.id, 'previous');
+                    }}
                 >
-                  <option value="">Не назначено</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} ({emp.position})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    <span className="action-text">Предшествующая задача</span>
+                    <span className={`action-icon ${selectedTask?.id === task.id && selectedTask?.connectionType === 'previous' ? 'active' : ''}`}>+</span>
+                </div>
+                <div 
+                    className="task-action"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleConnectionClick(task.id, 'next');
+                    }}
+                >
+                    <span className="action-text">Следующая задача</span>
+                    <span className={`action-icon ${selectedTask?.id === task.id && selectedTask?.connectionType === 'next' ? 'active' : ''}`}>+</span>
+                </div>
             </div>
           </div>
         ))}
@@ -448,9 +463,9 @@ function ProjectConstructor() {
             left: 0,
             width: "100%",
             height: "100%",
+            pointerEvents: "none",
           }}
         >
-          {renderConnections()}
           <defs>
             <marker
               id="arrowhead"
@@ -463,6 +478,7 @@ function ProjectConstructor() {
               <polygon points="0 0, 10 3.5, 0 7" fill="#5c2f91" />
             </marker>
           </defs>
+          {renderConnections()}
         </svg>
       </div>
     </div>

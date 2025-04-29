@@ -10,7 +10,9 @@ const ProjectEditor = () => {
         <div className="container">
             <Header />
             <div className="editor-header">
-                <h2>Конструктор проекта</h2>
+                <div className="editor-title-block">
+                    <h1 className="editor-title">Конструктор проекта</h1>
+                </div>
                 <div className="editor-actions">
                     <button 
                         className="save-project-btn"
