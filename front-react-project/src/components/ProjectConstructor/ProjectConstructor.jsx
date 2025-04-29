@@ -113,6 +113,11 @@ function ProjectConstructor() {
   }
 
   function handleTaskMouseDown(taskId, e) {
+    // Проверяем, не является ли цель клика одной из кнопок действий
+    if (e.target.closest('.task-action')) {
+      return;
+    }
+
     if (e.button !== 0) return;
 
     const startPos = { x: e.clientX, y: e.clientY };
@@ -124,29 +129,51 @@ function ProjectConstructor() {
       y: startPos.y - taskRect.top,
     };
 
-    taskElement.classList.add("dragging");
+    let isDragging = false;
+    let moved = false;
 
     function handleMouseMove(e) {
-      const newX = Math.max(0, Math.min(e.clientX - containerRect.left - offset.x, containerRect.width - taskRect.width));
-      const newY = Math.max(0, Math.min(e.clientY - containerRect.top - offset.y, containerRect.height - taskRect.height));
+      if (e.clientX !== startPos.x || e.clientY !== startPos.y) {
+        moved = true;
+      }
 
-      setProjectAreaTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, x: newX, y: newY } : t))
-      );
+      if (!isDragging && (Math.abs(e.clientX - startPos.x) > 3 || Math.abs(e.clientY - startPos.y) > 3)) {
+        isDragging = true;
+        taskElement.classList.add("dragging");
+      }
+
+      if (isDragging) {
+        const newX = Math.max(0, Math.min(e.clientX - containerRect.left - offset.x, containerRect.width - taskRect.width));
+        const newY = Math.max(0, Math.min(e.clientY - containerRect.top - offset.y, containerRect.height - taskRect.height));
+
+        setProjectAreaTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? { ...t, x: newX, y: newY } : t))
+        );
+      }
     }
 
     function handleMouseUp() {
       taskElement.classList.remove("dragging");
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      
+      // Обрабатываем клик только если не было перемещения
+      if (!moved) {
+        const task = projectAreaTasks.find((t) => t.id === taskId);
+        handleTaskSelect(task);
+      }
     }
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
   }
 
-  function handleTaskClick(taskId, connectionType) {
-    const task = projectAreaTasks.find(t => t.id === taskId);
+  function handleTaskSelect(task, e) {
+    // Проверяем, не является ли цель клика одной из кнопок действий
+    if (e && e.target.closest('.task-action')) {
+      return;
+    }
+
     if (!task) return;
 
     if (selectedTask) {
@@ -154,18 +181,16 @@ function ProjectConstructor() {
         setSelectedTask(null);
         return;
       }
-
-      // Определяем from и to в зависимости от типа связи
-      const from = connectionType === 'previous' ? task.id : selectedTask.id;
-      const to = connectionType === 'previous' ? selectedTask.id : task.id;
-
       setConnections([
         ...connections,
-        { from, to }
+        {
+          from: selectedTask.id,
+          to: task.id,
+        },
       ]);
       setSelectedTask(null);
     } else {
-      setSelectedTask({...task, connectionType});
+      setSelectedTask(task);
     }
   }
 
@@ -173,28 +198,6 @@ function ProjectConstructor() {
     setProjectAreaTasks(prev =>
       prev.map(task => task.id === taskId ? { ...task, [field]: value } : task)
     );
-  }
-
-  function handleConnectionClick(taskId, connectionType) {
-    const task = projectAreaTasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    if (selectedTask) {
-      if (selectedTask.id === taskId) {
-        setSelectedTask(null);
-        return;
-      }
-
-      // Определяем направление связи на основе типа кнопки
-      const newConnection = connectionType === 'next' 
-        ? { from: selectedTask.id, to: taskId }
-        : { from: taskId, to: selectedTask.id };
-
-      setConnections([...connections, newConnection]);
-      setSelectedTask(null);
-    } else {
-      setSelectedTask({ ...task, connectionType });
-    }
   }
 
   function calculateConnectionPoints(fromTask, toTask) {
@@ -392,65 +395,39 @@ function ProjectConstructor() {
           <div
             key={task.id}
             ref={(el) => (taskElements.current[`task-${task.id}`] = el)}
-            className={`task ${selectedTask ? 'connection-mode' : ''}`}
+            className={`task ${selectedTask?.id === task.id ? "selected" : ""}`}
             style={{
               left: `${task.x}px`,
               top: `${task.y}px`,
               position: "absolute",
             }}
-            onMouseDown={(e) => {
-              // Если есть выбранная задача для связи, обрабатываем клик для создания связи
-              if (selectedTask && selectedTask.id !== task.id) {
-                e.stopPropagation();
-                // Определяем направление связи на основе типа выбранной кнопки
-                const newConnection = selectedTask.connectionType === 'next' 
-                  ? { from: selectedTask.id, to: task.id }
-                  : { from: task.id, to: selectedTask.id };
-
-                setConnections([...connections, newConnection]);
-                setSelectedTask(null);
-                return;
-              }
-              // Иначе обрабатываем перетаскивание
-              handleTaskMouseDown(task.id, e);
-            }}
+            onMouseDown={(e) => handleTaskMouseDown(task.id, e)}
           >
             <div className="task-header">{task.name}</div>
             <div className="task-actions">
-                <div className="task-action">
-                    <span className="action-text">Указать приоритет</span>
-                    <span className="action-icon">+</span>
-                </div>
-                <div className="task-action">
-                    <span className="action-text">Установить сроки</span>
-                    <span className="action-icon calendar">
-                        <img src="/calendar.svg" alt="calendar" />
-                    </span>
-                </div>
-                <div className="task-action">
-                    <span className="action-text">Выбрать исполнителя</span>
-                    <span className="action-icon">+</span>
-                </div>
-                <div 
-                    className="task-action"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleConnectionClick(task.id, 'previous');
-                    }}
-                >
-                    <span className="action-text">Предшествующая задача</span>
-                    <span className={`action-icon ${selectedTask?.id === task.id && selectedTask?.connectionType === 'previous' ? 'active' : ''}`}>+</span>
-                </div>
-                <div 
-                    className="task-action"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleConnectionClick(task.id, 'next');
-                    }}
-                >
-                    <span className="action-text">Следующая задача</span>
-                    <span className={`action-icon ${selectedTask?.id === task.id && selectedTask?.connectionType === 'next' ? 'active' : ''}`}>+</span>
-                </div>
+              <div className="task-action" onClick={(e) => {
+                e.stopPropagation();
+                // Здесь будет логика установки приоритета
+              }}>
+                <span className="action-text">Указать приоритет</span>
+                <span className="action-icon">+</span>
+              </div>
+              <div className="task-action" onClick={(e) => {
+                e.stopPropagation();
+                // Здесь будет логика установки дедлайна
+              }}>
+                <span className="action-text">Установить дедлайн</span>
+                <span className="action-icon calendar">
+                  <img src="/calendar.svg" alt="calendar" />
+                </span>
+              </div>
+              <div className="task-action" onClick={(e) => {
+                e.stopPropagation();
+                // Здесь будет логика назначения исполнителя
+              }}>
+                <span className="action-text">Назначить исполнителя</span>
+                <span className="action-icon">👤</span>
+              </div>
             </div>
           </div>
         ))}

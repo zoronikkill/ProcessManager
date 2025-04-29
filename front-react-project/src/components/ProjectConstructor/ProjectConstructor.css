@@ -79,6 +79,12 @@
     z-index: 1;
     user-select: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task.selected {
+    border: 2px solid #5c2f91;
+    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.2);
 }
 
 .task-header {
@@ -163,6 +169,8 @@
 .task.dragging {
     opacity: 0.9;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    cursor: grabbing;
+    z-index: 1000;
 }
 
 .connection-mode .task {
