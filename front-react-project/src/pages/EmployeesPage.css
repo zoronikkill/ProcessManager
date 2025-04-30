@@ -26,7 +26,7 @@
   display: flex;
   gap: 15px;
   margin-bottom: 30px; /* Увеличен отступ */
-  align-items: center; /* Выравнивание элементов по центру */
+  align-items: baseline; /* Выравнивание по базовой линии текста */
 }
 
 .search-input {
@@ -48,7 +48,7 @@
 .add-employee-btn {
   background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%); /* Градиентный фон */
   color: white;
-  border: none;
+  border: 1px solid transparent; /* Добавляем прозрачную границу той же толщины, что и у input */
   padding: 12px 20px; /* Увеличены отступы */
   border-radius: 6px;
   cursor: pointer;
@@ -57,6 +57,9 @@
   transition: background 0.3s ease, transform 0.1s ease; /* Плавные переходы */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Небольшая тень */
   box-sizing: border-box; /* Добавлено для выравнивания */
+  line-height: normal; /* Убедимся, что высота строки не мешает */
+  display: inline-flex; /* Добавляем для лучшего контроля внутреннего выравнивания */
+  align-items: center; /* Выравниваем текст внутри кнопки по центру */
 }
 
 .add-employee-btn:hover {
