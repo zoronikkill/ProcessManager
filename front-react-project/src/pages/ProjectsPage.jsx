@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Footer from "../components/Footer/Footer"; // Import Footer
 import "./ProjectsPage.css";
 
 const ProjectsPage = () => {
@@ -17,7 +16,7 @@ const ProjectsPage = () => {
   );
 
   return (
-    <div className="container"> {/* Wrap content in a container if needed, or adjust structure */}
+    <div className="container">
       <div className="projects-page">
         <div className="projects-header">
           <h1>Мои проекты</h1>
@@ -51,7 +50,6 @@ const ProjectsPage = () => {
           ))}
         </div>
       </div>
-      <Footer /> {/* Add Footer component */}
     </div>
   );
 };

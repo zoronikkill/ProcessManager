@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../components/Header/Header';
-import Footer from '../components/Footer/Footer';
 import EmployeeForm from '../components/EmployeeForm/EmployeeForm';
 import './EmployeesPage.css';
 
@@ -28,8 +26,6 @@ const EmployeesPage = () => {
 
   return (
     <div className="container">
-      <Header />
-      
       <div className="employees-page">
         <h1>Управление сотрудниками</h1>
         
@@ -74,8 +70,6 @@ const EmployeesPage = () => {
           ))}
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

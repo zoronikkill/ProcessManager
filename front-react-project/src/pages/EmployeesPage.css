@@ -2,59 +2,108 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: #f8f9fa; /* Добавлен светлый фон для всей страницы */
 }
 
 .employees-page {
   flex: 1;
-  padding: 20px;
+  padding: 30px; /* Увеличен отступ */
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 20px auto; /* Добавлен отступ сверху/снизу */
   width: 100%;
+  background-color: #ffffff; /* Белый фон для основной части */
+  border-radius: 8px; /* Скругление углов для основного блока */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Небольшая тень */
+}
+
+.employees-page h1 {
+    color: #343a40; /* Более темный цвет заголовка */
+    margin-bottom: 25px; /* Увеличен отступ снизу */
+    text-align: center; /* Центрирование заголовка */
 }
 
 .employees-controls {
   display: flex;
   gap: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 30px; /* Увеличен отступ */
+  align-items: center; /* Выравнивание элементов по центру */
 }
 
 .search-input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 15px; /* Увеличены отступы */
+  border: 1px solid #ced4da; /* Более светлая граница */
+  border-radius: 6px; /* Немного большее скругление */
+  font-size: 1rem; /* Стандартный размер шрифта */
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Плавный переход */
+  box-sizing: border-box; /* Добавлено для выравнивания */
+}
+
+.search-input:focus {
+    border-color: #80bdff; /* Цвет границы при фокусе */
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Тень при фокусе */
 }
 
 .add-employee-btn {
-  background: #5c2f91;
+  background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%); /* Градиентный фон */
   color: white;
   border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
+  padding: 12px 20px; /* Увеличены отступы */
+  border-radius: 6px;
   cursor: pointer;
   white-space: nowrap;
+  font-weight: 500; /* Немного жирнее шрифт */
+  transition: background 0.3s ease, transform 0.1s ease; /* Плавные переходы */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Небольшая тень */
+  box-sizing: border-box; /* Добавлено для выравнивания */
 }
 
 .add-employee-btn:hover {
-  background: #4a2475;
+  background: linear-gradient(45deg, #5a0fb1 0%, #1e63d6 100%); /* Более темный градиент при наведении */
+  transform: translateY(-1px); /* Небольшой подъем при наведении */
+}
+
+.add-employee-btn:active {
+    transform: translateY(0); /* Возврат при нажатии */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Уменьшение тени при нажатии */
 }
 
 .employee-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Немного уменьшена минимальная ширина */
+  gap: 25px; /* Увеличен промежуток */
 }
 
 .employee-card {
   background: #fff;
-  padding: 15px;
+  padding: 20px; /* Увеличены отступы */
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Немного другая тень */
+  border: 1px solid #e9ecef; /* Тонкая светлая граница */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Плавный переход для наведения */
+}
+
+.employee-card:hover {
+    transform: translateY(-3px); /* Подъем карточки при наведении */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Увеличение тени при наведении */
 }
 
 .employee-card h3 {
-  color: #5c2f91;
+  color: #007bff; /* Синий цвет для имени */
   margin-top: 0;
+  margin-bottom: 10px; /* Отступ под именем */
+  font-size: 1.2rem; /* Немного увеличен шрифт имени */
+}
+
+.employee-card p {
+    margin-bottom: 8px; /* Отступ между параграфами */
+    color: #495057; /* Цвет текста */
+    font-size: 0.95rem; /* Размер шрифта деталей */
+}
+
+.employee-card p strong {
+    color: #343a40; /* Цвет для выделенного текста */
 }
 
 .employee-form-modal {
@@ -63,33 +112,45 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6); /* Немного темнее фон */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px; /* Добавлен отступ для мобильных устройств */
 }
 
 .modal-content {
   background: white;
-  padding: 25px;
-  border-radius: 8px;
+  padding: 30px; /* Увеличены отступы */
+  border-radius: 10px; /* Большее скругление */
   width: 90%;
-  max-width: 500px;
+  max-width: 550px; /* Немного шире */
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Более заметная тень */
+}
+
+.modal-content h2 { /* Стиль для заголовка формы, если он есть в EmployeeForm */
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #343a40;
 }
 
 .close-btn {
-  margin-top: 15px;
-  padding: 8px 15px;
-  background: #dc3545;
+  margin-top: 20px; /* Увеличен отступ */
+  padding: 10px 18px; /* Увеличены отступы */
+  background: #6c757d; /* Серый цвет для кнопки закрытия */
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: block; /* Чтобы кнопка заняла всю ширину, если нужно */
+  width: auto; /* Или оставить автоматическую ширину */
+  float: right; /* Разместить справа */
 }
 
 .close-btn:hover {
-  background: #c82333;
+  background: #5a6268; /* Более темный серый при наведении */
 }

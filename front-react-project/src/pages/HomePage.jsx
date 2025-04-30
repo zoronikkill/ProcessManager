@@ -1,13 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header/Header';
-import Footer from '../components/Footer/Footer';
 import './HomePage.css';
 
 const HomePage = () => {
     return (
         <div className="container">
-            <Header />
             <main className="home-main">
                 <div className="welcome-section">
                     <h1>Добро пожаловать в систему управления бизнес-процессами</h1>
@@ -49,7 +46,6 @@ const HomePage = () => {
                     </Link>
                 </div>
             </main>
-            <Footer />
         </div>
     );
 };
