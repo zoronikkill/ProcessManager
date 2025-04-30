@@ -4,6 +4,17 @@
     margin: 0 auto;
 }
 
+.project-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Занимаем всю высоту родителя (.main-content) */
+}
+
+.project-editor-main {
+    flex: 1; /* Занимаем все доступное пространство */
+    display: flex; /* Чтобы ProjectConstructor мог растянуться */
+}
+
 .editor-header {
     display: flex;
     justify-content: space-between;
