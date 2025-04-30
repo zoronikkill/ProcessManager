@@ -1,15 +1,6 @@
-import { useLocation } from 'react-router-dom';
 import './Footer.css';
 
 function Footer() {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
-
-  // Показываем футер только на главной странице
-  if (!isHomePage) {
-    return null;
-  }
-
   return (
     <footer>
       <div className="footer-content">

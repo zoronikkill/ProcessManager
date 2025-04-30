@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Footer from "../components/Footer/Footer"; // Import Footer
 import "./ProjectsPage.css";
 
 const ProjectsPage = () => {
@@ -16,38 +17,41 @@ const ProjectsPage = () => {
   );
 
   return (
-    <div className="projects-page">
-      <div className="projects-header">
-        <h1>Мои проекты</h1>
-        <input
-          type="text"
-          placeholder="Поиск по названию..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+    <div className="container"> {/* Wrap content in a container if needed, or adjust structure */}
+      <div className="projects-page">
+        <div className="projects-header">
+          <h1>Мои проекты</h1>
+          <input
+            type="text"
+            placeholder="Поиск по названию..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-      <div className="projects-grid">
-        {filteredProjects.map((project) => (
-          <div key={project.id} className="project-card">
-            <h3>{project.title}</h3>
-            <div className="project-meta">
-              <span>
-                Создан: {new Date(project.createdAt).toLocaleDateString()}
-              </span>
-              <span>
-                Изменен: {new Date(project.updatedAt).toLocaleDateString()}
-              </span>
+        <div className="projects-grid">
+          {filteredProjects.map((project) => (
+            <div key={project.id} className="project-card">
+              <h3>{project.title}</h3>
+              <div className="project-meta">
+                <span>
+                  Создан: {new Date(project.createdAt).toLocaleDateString()}
+                </span>
+                <span>
+                  Изменен: {new Date(project.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="project-actions">
+                <Link to={`/editor/${project.id}`} className="button">
+                  Открыть
+                </Link>
+                <button className="button danger">Удалить</button>
+              </div>
             </div>
-            <div className="project-actions">
-              <Link to={`/editor/${project.id}`} className="button">
-                Открыть
-              </Link>
-              <button className="button danger">Удалить</button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+      <Footer /> {/* Add Footer component */}
     </div>
   );
 };
