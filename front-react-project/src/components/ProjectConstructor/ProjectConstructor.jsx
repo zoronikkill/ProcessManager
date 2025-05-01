@@ -1,10 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./ProjectConstructor.css";
 import Button from "../Button/Button";
-import { useParams, useNavigate } from 'react-router-dom';
-import projectService from "../../services/projectService";
-import taskService from "../../services/taskService";
-import employeeService from "../../services/employeeService";
+import { useParams } from 'react-router-dom';
 
 function ProjectConstructor() {
   const [initialTasks, setInitialTasks] = useState([
@@ -18,37 +15,26 @@ function ProjectConstructor() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTaskName, setNewTaskName] = useState("");
   const [showTaskForm, setShowTaskForm] = useState(false);
-  const [projectTitle, setProjectTitle] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [employees, setEmployees] = useState([]);
-  
   const projectAreaRef = useRef(null);
   const taskElements = useRef({});
   const { projectId } = useParams();
-  const navigate = useNavigate();
+  const [employees, setEmployees] = useState(
+    JSON.parse(localStorage.getItem('employees')) || []
+  );
+  const [dragTimeout, setDragTimeout] = useState(null);
 
-  // Добавляем обработчик для кнопки "Сохранить проект"
   useEffect(() => {
     const handleSave = () => saveProject();
     document.addEventListener('saveProject', handleSave);
     return () => document.removeEventListener('saveProject', handleSave);
-  }, [projectAreaTasks, connections, projectTitle]);
+  }, [projectAreaTasks, connections]);
 
-  // Загрузка данных сотрудников при монтировании компонента
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  // Загрузка проекта при монтировании компонента, если есть projectId
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
     }
   }, [projectId]);
 
-  // Обновление соединений между задачами при изменении позиций задач
   useEffect(() => {
     if (projectAreaTasks.length > 0 && connections.length > 0) {
       const timer = setTimeout(() => {
@@ -59,17 +45,10 @@ function ProjectConstructor() {
     }
   }, [projectAreaTasks]);
 
-  // Функция загрузки данных о сотрудниках
-  const fetchEmployees = async () => {
-    try {
-      const data = await employeeService.getAll();
-      setEmployees(data);
-    } catch (err) {
-      console.error("Ошибка при загрузке сотрудников:", err);
-      // Резервный вариант - загрузка из localStorage
-      const savedEmployees = JSON.parse(localStorage.getItem('employees')) || [];
-      setEmployees(savedEmployees);
-    }
+  function handleSaveEmployee (employee){
+    const updatedEmployees = [...employees, employee];
+    setEmployees(updatedEmployees);
+    localStorage.setItem('employees', JSON.stringify(updatedEmployees));
   };
 
   function handleAddNewTask() {
@@ -221,6 +200,7 @@ function ProjectConstructor() {
     );
   }
 
+  // Добавляем функцию для удаления связи по индексу
   function removeConnection(index) {
     setConnections(prev => prev.filter((_, i) => i !== index));
   }
@@ -299,112 +279,6 @@ function ProjectConstructor() {
     };
   }
 
-  // Функция загрузки проекта с сервера
-  const loadProject = async (id) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const project = await projectService.getById(id);
-      
-      setProjectTitle(project.title || "Без названия");
-      setProjectAreaTasks(project.data?.tasks || []);
-      setConnections(project.data?.connections || []);
-    } catch (err) {
-      console.error("Ошибка при загрузке проекта:", err);
-      setError("Не удалось загрузить проект. Пожалуйста, попробуйте позже.");
-      
-      // Резервный вариант - загрузка из localStorage
-      const savedProjects = JSON.parse(localStorage.getItem('projects') || '[]');
-      const project = savedProjects.find(p => p.id === id);
-      
-      if (project) {
-        setProjectTitle(project.title || "Без названия");
-        setProjectAreaTasks(project.data?.tasks || []);
-        setConnections(project.data?.connections || []);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Функция сохранения проекта на сервер
-  const saveProject = async () => {
-    // Если нет названия проекта, запрашиваем его
-    let title = projectTitle;
-    if (!title) {
-      title = prompt('Введите название проекта:');
-      if (!title) return;
-      setProjectTitle(title);
-    }
-    
-    const projectData = {
-      title,
-      data: {
-        tasks: projectAreaTasks,
-        connections: connections,
-        settings: {}
-      }
-    };
-    
-    try {
-      setIsSaving(true);
-      
-      if (projectId) {
-        // Обновление существующего проекта
-        await projectService.update(projectId, projectData);
-        alert(`Проект "${title}" успешно обновлен!`);
-      } else {
-        // Создание нового проекта
-        const newProject = await projectService.create(projectData);
-        alert(`Проект "${title}" успешно сохранен!`);
-        
-        // Перенаправляем на страницу с новым ID
-        navigate(`/editor/${newProject.id}`);
-      }
-    } catch (err) {
-      console.error("Ошибка при сохранении проекта:", err);
-      alert("Не удалось сохранить проект. Пожалуйста, попробуйте позже.");
-      
-      // Резервный вариант - сохранение в localStorage
-      const projectForStorage = {
-        id: projectId || crypto.randomUUID(),
-        title,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        data: {
-          tasks: projectAreaTasks,
-          connections: connections,
-          settings: {}
-        }
-      };
-      
-      const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]');
-      const projectIndex = existingProjects.findIndex(p => p.id === projectId);
-      
-      if (projectIndex !== -1) {
-        // Обновляем существующий проект
-        existingProjects[projectIndex] = {
-          ...projectForStorage,
-          createdAt: existingProjects[projectIndex].createdAt
-        };
-      } else {
-        // Добавляем новый проект
-        existingProjects.push(projectForStorage);
-      }
-      
-      localStorage.setItem('projects', JSON.stringify(existingProjects));
-      alert(`Проект "${title}" сохранен локально!`);
-      
-      if (!projectId) {
-        // Перенаправляем на страницу с новым ID
-        navigate(`/editor/${projectForStorage.id}`);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   function renderConnections() {
     return connections.map((conn, index) => {
       const fromTask = projectAreaTasks.find((t) => t.id === conn.from);
@@ -430,32 +304,39 @@ function ProjectConstructor() {
     });
   }
 
-  if (loading) {
-    return <div className="loading-indicator">Загрузка проекта...</div>;
+  function saveProject() {
+    const projectName = prompt('Введите название проекта:');
+    if (!projectName) return;
+  
+    const newProject = {
+      id: crypto.randomUUID(),
+      title: projectName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      data: {
+        tasks: projectAreaTasks,
+        connections: connections,
+        settings: {}
+      }
+    };
+  
+    const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+    localStorage.setItem('projects', JSON.stringify([...existingProjects, newProject]));
+    alert(`Проект "${projectName}" сохранен!`);
   }
 
-  if (error) {
-    return <div className="error-message">{error}</div>;
-  }
+  const loadProject = (projectId) => {
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+    const project = projects.find(p => p.id === projectId);
+    
+    if (project) {
+      setProjectAreaTasks(project.data.tasks || []);
+      setConnections(project.data.connections || []);
+    }
+  };
 
   return (
     <div className="project-constructor">
-      <div className="project-header">
-        <input
-          type="text"
-          value={projectTitle}
-          onChange={(e) => setProjectTitle(e.target.value)}
-          placeholder="Название проекта"
-          className="project-title-input"
-        />
-        <Button
-          text={isSaving ? "Сохранение..." : "Сохранить проект"}
-          className="save-button"
-          onClick={saveProject}
-          disabled={isSaving}
-        />
-      </div>
-      
       <div className="tasks-panel">
         <div className="tasks-panel-header">
           <h3>Доступные задачи</h3>
@@ -531,10 +412,7 @@ function ProjectConstructor() {
             <div className="task-actions">
               <div className="task-action" onClick={(e) => {
                   e.stopPropagation();
-                  const priority = prompt("Укажите приоритет задачи (Высокий, Средний, Низкий):", task.priority || "Средний");
-                  if (priority) {
-                    handleTaskUpdate(task.id, "priority", priority);
-                  }
+                  // Логика установки приоритета
               }}>
                 <span className="action-text">Указать приоритет</span>
                 <span className="info-text">{task.priority || 'Без приоритета'}</span>
@@ -542,40 +420,20 @@ function ProjectConstructor() {
               </div>
               <div className="task-action" onClick={(e) => {
                   e.stopPropagation();
-                  const deadline = prompt("Укажите дедлайн (формат ДД/ММ/ГГГГ):", task.deadline || "");
-                  if (deadline) {
-                    handleTaskUpdate(task.id, "deadline", deadline);
-                  }
+                  // Логика установки дедлайна
               }}>
                 <span className="action-text">Установить дедлайн</span>
-                <span className="info-text">{task.deadline || 'Не указан'}</span>
+                <span className="info-text">{task.deadline || '01/01/2010'}</span>
                 <span className="action-icon calendar">
                   <img src="/calendar.svg" alt="calendar" />
                 </span>
               </div>
               <div className="task-action" onClick={(e) => {
                   e.stopPropagation();
-                  // Выбор сотрудника из списка
-                  if (employees.length === 0) {
-                    alert("Список сотрудников пуст. Сначала добавьте сотрудников.");
-                    return;
-                  }
-                  
-                  const employeeList = employees.map(emp => `${emp.id}: ${emp.name}`).join("\n");
-                  const selectedId = prompt(`Выберите ID сотрудника из списка:\n${employeeList}`, task.assigneeId || "");
-                  
-                  if (selectedId) {
-                    const employee = employees.find(e => e.id.toString() === selectedId.toString());
-                    if (employee) {
-                      handleTaskUpdate(task.id, "assigneeId", selectedId);
-                      handleTaskUpdate(task.id, "assignee", employee.name);
-                    } else {
-                      alert("Сотрудник с указанным ID не найден.");
-                    }
-                  }
+                  // Логика назначения исполнителя
               }}>
                 <span className="action-text">Назначить исполнителя</span>
-                <span className="info-text">{task.assignee || 'Не назначен'}</span>
+                <span className="info-text">{task.assignee || 'Петров А.В.'}</span>
                 <span className="action-icon">👤</span>
               </div>
             </div>

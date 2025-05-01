@@ -35,10 +35,61 @@
     font-weight: 600;
 }
 
+/* Adjust styles for small buttons to make them more compact */
+.button.small { /* Assuming Button component renders <button class="button small ..."> */
+    padding: 4px 10px; /* Reduce vertical padding, adjust horizontal */
+    font-size: 13px;   /* Slightly smaller font */
+    min-width: auto;   /* Allow button to shrink */
+    line-height: 1.4;  /* Adjust line height for smaller padding */
+}
+
+/* Styles for the new task form */
+.task-form {
+    display: flex;
+    flex-direction: column; /* Stack input and buttons vertically */
+    gap: 8px; /* Space between input and buttons */
+    margin-top: 12px; /* Space above the form */
+    margin-bottom: 16px; /* Space below the form */
+    padding: 10px;
+    background-color: #f9f9f9; /* Light background for the form area */
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.task-input {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%; /* Make input take full width */
+    box-sizing: border-box; /* Include padding and border in width */
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 8px; /* Space between buttons */
+}
+
+/* Optional: Adjust specific button styles if needed */
+.form-buttons .button.confirm-button {
+    /* Specific styles for confirm button */
+}
+
+.form-buttons .button.cancel-button {
+    /* Specific styles for cancel button */
+    background-color: #eee;
+    color: #555;
+}
+.form-buttons .button.cancel-button:hover {
+    background-color: #ddd;
+}
+
 .tasks-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 16px; /* Increased gap for better spacing */
+    margin-top: 16px; /* Add margin above the list */
 }
 
 .tasks-panel .task {
