@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: 'localhost',
-    port: 8000,
+    port: 5173,  // Изменено с 8000 на 5173 для избежания конфликта с Django
   }
 })
