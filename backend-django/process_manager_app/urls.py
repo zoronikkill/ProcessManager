@@ -10,6 +10,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+)
 
 # Создаем корневое представление API с разрешением для всех
 @api_view(['GET'])
@@ -44,6 +49,15 @@ urlpatterns = [
     # Корневое представление API с разрешением для всех
     path('api/', api_root, name='api-root'),
     path('api/', include(router.urls)),
+    
+    # Маршруты аутентификации JWT
+    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('api/auth/register/', views.RegisterView.as_view(), name='register'),
+    path('api/auth/me/', views.CurrentUserView.as_view(), name='current_user'),
+    
+    # REST framework авторизация
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
 

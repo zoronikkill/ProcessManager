@@ -1,12 +1,72 @@
-# React + Vite
+# Business Process Manager
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение для управления бизнес-процессами компании.
 
-Currently, two official plugins are available:
+## Требования
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 14+ и npm 6+
+- Backend API сервер Django (см. директорию backend-django)
 
-## Expanding the ESLint configuration
+## Установка
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Клонировать репозиторий:
+```bash
+git clone <repository-url>
+```
+
+2. Перейти в директорию проекта:
+```bash
+cd front-react-project
+```
+
+3. Установить зависимости:
+```bash
+npm install
+```
+
+## Запуск
+
+### Режим разработки
+
+```bash
+npm run dev
+```
+
+После запуска фронтенд будет доступен по адресу: http://localhost:5173/
+
+### Сборка для продакшена
+
+```bash
+npm run build
+```
+
+Результат сборки будет размещен в директории `dist/`.
+
+## Настройка API endpoint
+
+По умолчанию фронтенд работает с API по адресу `http://localhost:8000/api`. 
+Для изменения адреса API, создайте файл `.env.local` в корне проекта со следующим содержимым:
+
+```
+VITE_API_URL=<ваш-api-endpoint>
+```
+
+## Тестовый пользователь
+
+Логин: admin  
+Пароль: admin
+
+## Структура проекта
+
+- `src/` - исходный код
+  - `components/` - React компоненты
+  - `pages/` - страницы приложения
+  - `services/` - сервисы для работы с API
+  - `contexts/` - контексты React
+  - `hooks/` - пользовательские React хуки
+  - `utils/` - вспомогательные функции
+  - `config/` - конфигурационные файлы
+
+## Лицензия
+
+MIT

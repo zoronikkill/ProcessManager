@@ -30,6 +30,15 @@ class ProcessService {
   }
 
   /**
+   * Создает новый бизнес-процесс 
+   * @param {Object} processData - Данные для создания бизнес-процесса
+   * @returns {Promise<Object>} - Созданный бизнес-процесс
+   */
+  async create(processData) {
+    return apiService.post(this.endpoint, processData);
+  }
+
+  /**
    * Обновляет данные бизнес-процесса
    * @param {string|number} id - Идентификатор бизнес-процесса
    * @param {Object} processData - Обновленные данные бизнес-процесса

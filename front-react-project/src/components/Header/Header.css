@@ -1,7 +1,10 @@
 header {
   background-color: #5c2f91;
   color: white;
-  padding: 10px 0;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .nav {
@@ -23,16 +26,86 @@ header {
 
 .nav .title {
   font-size: 24px;
-  margin-left: 20px;
   font-weight: bold;
-  text-align: center;
   color: lightblue;
+  text-decoration: none;
+}
+
+.profile-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.user-info span {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.profile-icon {
+  position: relative;
+  cursor: pointer;
 }
 
 .profile-icon img {
-  float: right;
-  margin-right: 5px;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
+  border: 2px solid white;
+}
+
+.profile-icon:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 150px;
+  display: none;
+  z-index: 100;
+}
+
+.logout-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.logout-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.auth-links {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-link {
+  color: white;
+  text-decoration: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.auth-link:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }

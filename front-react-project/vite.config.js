@@ -1,11 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // Добавляем поддержку JSX в .js файлах
+      include: '**/*.{jsx,js}'
+    })
+  ],
   server: {
-    host: 'localhost',
-    port: 5173,  // Изменено с 8000 на 5173 для избежания конфликта с Django
+    port: 5173,
+    host: 'localhost'
+  },
+  resolve: {
+    extensions: ['.js', '.jsx', '.json']
   }
 })

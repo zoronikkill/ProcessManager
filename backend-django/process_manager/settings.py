@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',     # CORS для взаимодействия с React
     'django_filters',  # Для фильтрации в REST API
     'process_manager_app',  # Наше приложение
+    'rest_framework_simplejwt',  # JWT токены для авторизации
 ]
 
 MIDDLEWARE = [
@@ -133,9 +135,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework настройки
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Изменено с IsAuthenticated на AllowAny для разработки
+        'rest_framework.permissions.IsAuthenticated',  # Изменено с AllowAny на IsAuthenticated
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT авторизация
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
@@ -148,6 +151,28 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20
 }
 
+# JWT настройки
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Время жизни access токена
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Время жизни refresh токена
+    'ROTATE_REFRESH_TOKENS': True,  # Генерировать новый refresh токен при использовании старого
+    'BLACKLIST_AFTER_ROTATION': False,  # Не добавлять старые токены в чёрный список
+    'UPDATE_LAST_LOGIN': True,  # Обновлять поле last_login пользователя
+
+    'ALGORITHM': 'HS256',  # Алгоритм шифрования
+    'SIGNING_KEY': SECRET_KEY,  # Ключ для подписи
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Тип заголовка авторизации
+    'USER_ID_FIELD': 'id',  # Поле для идентификации пользователя
+    'USER_ID_CLAIM': 'user_id',  # Имя claim для ID пользователя
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}
+
 # CORS настройки - разрешаем запросы с React-фронтенда
 CORS_ALLOW_ALL_ORIGINS = True  # Только для разработки!
 
@@ -157,13 +182,8 @@ CORS_ALLOW_ALL_ORIGINS = True  # Только для разработки!
 #     "http://127.0.0.1:5173",
 # ]
 
-# Настройки для JWT токенов (опционально, если решите использовать их вместо сессий)
-# REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'].append('rest_framework_simplejwt.authentication.JWTAuthentication')
-
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-# }
+# Разрешаем куки в CORS запросах
+CORS_ALLOW_CREDENTIALS = True
 
 # Настройки логирования
 LOGGING = {

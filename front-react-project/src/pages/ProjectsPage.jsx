@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import projectService from "../services/projectService";
+import processService from "../services/processService";
 import "./ProjectsPage.css";
 
 const ProjectsPage = () => {
@@ -18,7 +18,10 @@ const ProjectsPage = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const data = await projectService.getAll();
+      // Используем processService вместо projectService
+      const result = await processService.getAll();
+      // Преобразуем данные из формата API
+      const data = Array.isArray(result.results) ? result.results : (result || []);
       setProjects(data);
       setError(null);
     } catch (err) {
@@ -37,7 +40,7 @@ const ProjectsPage = () => {
   const handleDeleteProject = async (id) => {
     if (window.confirm("Вы уверены, что хотите удалить этот проект?")) {
       try {
-        await projectService.delete(id);
+        await processService.delete(id);
         setProjects(projects.filter(project => project.id !== id));
         // Синхронизировать localStorage после успешного API-запроса
         const updatedProjects = projects.filter(project => project.id !== id);
@@ -46,7 +49,7 @@ const ProjectsPage = () => {
         console.error("Ошибка при удалении проекта:", err);
         alert("Не удалось удалить проект. Пожалуйста, попробуйте позже.");
         
-        if (err.response && err.response.status === 401) {
+        if (err.status === 401) {
           // Обработка ошибки авторизации
           alert("Требуется авторизация. Пожалуйста, войдите в систему.");
           // Можно добавить редирект на страницу логина
@@ -62,9 +65,9 @@ const ProjectsPage = () => {
     }
   };
 
-  // Фильтрация проектов по поисковому запросу
+  // Фильтрация проектов по поисковому запросу (используем title для процессов)
   const filteredProjects = projects.filter((project) =>
-    project.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    (project.title || project.name || '')?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Функция создания нового проекта и перехода в редактор
@@ -72,9 +75,10 @@ const ProjectsPage = () => {
     const projectName = prompt("Введите название нового проекта:");
     if (projectName) {
       try {
-        const newProject = await projectService.create({
+        const newProject = await processService.create({
           title: projectName,
           description: "",
+          status: "draft",
           data: {
             tasks: [],
             connections: [],
@@ -94,8 +98,8 @@ const ProjectsPage = () => {
         const newProject = {
           id: crypto.randomUUID(),
           title: projectName,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           data: {
             tasks: [],
             connections: [],
@@ -144,13 +148,16 @@ const ProjectsPage = () => {
             {filteredProjects.length > 0 ? (
               filteredProjects.map((project) => (
                 <div key={project.id} className="project-card">
-                  <h3>{project.title}</h3>
+                  <h3>{project.title || project.name}</h3>
                   <div className="project-meta">
                     <span>
-                      Создан: {new Date(project.createdAt).toLocaleDateString()}
+                      Создан: {new Date(project.created_at || project.createdAt).toLocaleDateString()}
                     </span>
                     <span>
-                      Изменен: {new Date(project.updatedAt).toLocaleDateString()}
+                      Изменен: {new Date(project.updated_at || project.updatedAt).toLocaleDateString()}
+                    </span>
+                    <span>
+                      Статус: {project.status_display || project.status}
                     </span>
                   </div>
                   <div className="project-actions">

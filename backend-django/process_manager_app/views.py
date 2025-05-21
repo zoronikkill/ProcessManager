@@ -20,6 +20,8 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView
 
 # Стандартный пагинатор для всех списков
 class StandardResultsSetPagination(PageNumberPagination):
@@ -305,7 +307,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Пользователь видит только свои уведомления.
+        Для анонимных пользователей возвращаем пустой QuerySet.
         """
+        if not self.request.user.is_authenticated:
+            return Notification.objects.none()
+        
         employee = Employee.objects.filter(user=self.request.user).first()
         if employee:
             return Notification.objects.filter(recipient=employee)
@@ -316,8 +322,49 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """
         Отметить все уведомления как прочитанные.
         """
+        if not request.user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+            
         employee = Employee.objects.filter(user=request.user).first()
         if employee:
             Notification.objects.filter(recipient=employee, is_read=False).update(is_read=True)
             return Response({'status': 'success'})
         return Response({'error': 'Employee profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+# Представление для регистрации новых пользователей
+class RegisterView(CreateAPIView):
+    """
+    API для регистрации новых пользователей.
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        # Создаем профиль сотрудника для нового пользователя
+        Employee.objects.create(
+            user=user,
+            name=user.get_full_name() or user.username,
+            email=user.email,
+            position="Новый сотрудник"  # Позиция по умолчанию
+        )
+        
+        return Response(
+            {"message": "User registered successfully"},
+            status=status.HTTP_201_CREATED
+        )
+
+# Представление для получения информации о текущем пользователе
+class CurrentUserView(RetrieveAPIView):
+    """
+    API для получения информации о текущем пользователе.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
