@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./ProjectConstructor.css";
 import Button from "../Button/Button";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import processService from "../../services/processService";
+import taskService from "../../services/taskService";
+import employeeService from "../../services/employeeService";
 
 function ProjectConstructor() {
   const [initialTasks, setInitialTasks] = useState([
@@ -15,26 +18,31 @@ function ProjectConstructor() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTaskName, setNewTaskName] = useState("");
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [projectTitle, setProjectTitle] = useState("");
   const projectAreaRef = useRef(null);
   const taskElements = useRef({});
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState(
     JSON.parse(localStorage.getItem('employees')) || []
   );
-  const [dragTimeout, setDragTimeout] = useState(null);
 
-  useEffect(() => {
-    const handleSave = () => saveProject();
-    document.addEventListener('saveProject', handleSave);
-    return () => document.removeEventListener('saveProject', handleSave);
-  }, [projectAreaTasks, connections]);
+  const [editingTask, setEditingTask] = useState(null);
+  const [editingField, setEditingField] = useState(null);
+  const [editValue, setEditValue] = useState("");
 
+  const [saving, setSaving] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Загружаем проект, если есть projectId
   useEffect(() => {
     if (projectId) {
       loadProject(projectId);
     }
   }, [projectId]);
 
+  // Обновляем соединения при изменении задач
   useEffect(() => {
     if (projectAreaTasks.length > 0 && connections.length > 0) {
       const timer = setTimeout(() => {
@@ -45,10 +53,232 @@ function ProjectConstructor() {
     }
   }, [projectAreaTasks]);
 
-  function handleSaveEmployee (employee){
-    const updatedEmployees = [...employees, employee];
-    setEmployees(updatedEmployees);
-    localStorage.setItem('employees', JSON.stringify(updatedEmployees));
+  // Добавляем обработчик события сохранения проекта
+  useEffect(() => {
+    const handleSave = () => saveProject();
+    document.addEventListener('saveProject', handleSave);
+    return () => document.removeEventListener('saveProject', handleSave);
+  }, [projectAreaTasks, connections, projectTitle]);
+
+  // Add a click outside handler to cancel editing
+  useEffect(() => {
+    if (editingTask && editingField) {
+      const handleClickOutside = (e) => {
+        // Only process click outside if it's not on an input or select element
+        if (!e.target.closest('.inline-edit-input') && !e.target.closest('.inline-edit-select')) {
+          const isTaskAction = e.target.closest('.task-action');
+          
+          // If clicking on a different task action or outside task actions entirely
+          if (!isTaskAction || (isTaskAction && !isTaskAction.contains(e.target.closest('.task-action')))) {
+            setEditingTask(null);
+            setEditingField(null);
+          }
+        }
+      };
+      
+      // Add the event listener to the document
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      // Clean up the event listener
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [editingTask, editingField]);
+
+  // Load project data from backend or fallback to localStorage
+  useEffect(() => {
+    if (projectId) {
+      loadProject(projectId);
+    }
+  }, [projectId]);
+
+  // Load employees from backend API
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  // Fetch employees from API
+  const fetchEmployees = async () => {
+    try {
+      const response = await employeeService.getAll();
+      // Handle API response format
+      const data = Array.isArray(response.results) ? response.results : (response || []);
+      setEmployees(data);
+    } catch (err) {
+      console.error("Error loading employees:", err);
+      // Fallback to localStorage
+      const localEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+      setEmployees(localEmployees);
+    }
+  };
+
+  // Function to load project from backend API
+  const loadProject = async (id) => {
+    setLoadingData(true);
+    setError(null);
+    
+    try {
+      const project = await processService.getById(id);
+      
+      // Set project title and data
+      setProjectTitle(project.title || "");
+      
+      // Handle tasks - either load from project.data.tasks or fetch with getTasks API
+      let projectTasks = [];
+      let projectConnections = [];
+      
+      if (project.data && project.data.tasks && project.data.connections) {
+        // Data is stored in process.data object
+        projectTasks = project.data.tasks || [];
+        projectConnections = project.data.connections || [];
+      } else {
+        // Try to fetch tasks from separate API endpoint
+        try {
+          const tasksResponse = await processService.getTasks(id);
+          projectTasks = tasksResponse.map(task => ({
+            id: task.id,
+            name: task.name,
+            x: task.position_x || 0,
+            y: task.position_y || 0,
+            priority: task.priority || "",
+            deadline: task.deadline || "",
+            assignee: task.assignee_name || "",
+            assigneeId: task.assignee || ""
+          }));
+          
+          // We'd also need to fetch connections between tasks
+          // This would depend on your API structure
+        } catch (err) {
+          console.error("Error fetching tasks:", err);
+        }
+      }
+      
+      setProjectAreaTasks(projectTasks);
+      setConnections(projectConnections);
+      
+    } catch (err) {
+      console.error("Error loading project:", err);
+      setError("Failed to load project. Please try again later.");
+      
+      // Fallback to localStorage
+      const savedProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+      const localProject = savedProjects.find(p => p.id === id);
+      
+      if (localProject) {
+        setProjectTitle(localProject.title || "");
+        setProjectAreaTasks(localProject.data?.tasks || []);
+        setConnections(localProject.data?.connections || []);
+      }
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  // Function to save project to backend
+  const saveProject = async () => {
+    let title = projectTitle;
+    if (!title) {
+      title = prompt('Введите название проекта:');
+      if (!title) return;
+      setProjectTitle(title);
+    }
+    
+    setSaving(true);
+    setError(null);
+    
+    const projectData = {
+      title: title,
+      data: {
+        tasks: projectAreaTasks,
+        connections: connections,
+        settings: {}
+      }
+    };
+    
+    try {
+      let savedProject;
+      
+      if (projectId) {
+        // Update existing project
+        savedProject = await processService.update(projectId, projectData);
+        alert(`Проект "${title}" успешно обновлен!`);
+      } else {
+        // Create new project
+        savedProject = await processService.create(projectData);
+        alert(`Проект "${title}" успешно сохранен!`);
+        
+        // Redirect to edit page with new ID
+        navigate(`/editor/${savedProject.id}`);
+      }
+      
+      // Save individual tasks to backend if your API requires it
+      /*
+      for (const task of projectAreaTasks) {
+        try {
+          const taskData = {
+            name: task.name,
+            process: savedProject.id,
+            position_x: task.x,
+            position_y: task.y,
+            priority: task.priority || null,
+            deadline: task.deadline || null,
+            assignee: task.assigneeId || null
+          };
+          
+          if (task.id && task.id.toString().length > 10) {
+            // Existing task, update it
+            await taskService.update(task.id, taskData);
+          } else {
+            // New task, create it
+            await taskService.create(taskData);
+          }
+        } catch (err) {
+          console.error(`Error saving task ${task.name}:`, err);
+        }
+      }
+      */
+      
+    } catch (err) {
+      console.error("Error saving project:", err);
+      setError("Failed to save project. Please try again later.");
+      
+      // Fallback to localStorage
+      const localProject = {
+        id: projectId || crypto.randomUUID(),
+        title: title,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        data: {
+          tasks: projectAreaTasks,
+          connections: connections,
+          settings: {}
+        }
+      };
+      
+      const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+      const projectIndex = existingProjects.findIndex(p => p.id === localProject.id);
+      
+      if (projectIndex !== -1) {
+        // Update existing project
+        existingProjects[projectIndex] = {
+          ...localProject,
+          createdAt: existingProjects[projectIndex].createdAt
+        };
+      } else {
+        // Add new project
+        existingProjects.push(localProject);
+      }
+      
+      localStorage.setItem('projects', JSON.stringify(existingProjects));
+      alert(`Проект "${title}" сохранен локально.`);
+      
+      if (!projectId) {
+        navigate(`/editor/${localProject.id}`);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   function handleAddNewTask() {
@@ -62,23 +292,6 @@ function ProjectConstructor() {
     setInitialTasks([...initialTasks, newTask]);
     setNewTaskName("");
     setShowTaskForm(false);
-  }
-
-  function getNewPosition() {
-    const container = projectAreaRef.current;
-    if (!container) return { x: 20, y: 20 };
-
-    const containerRect = container.getBoundingClientRect();
-    const gridSize = 20;
-    const tasksInRow = Math.floor((containerRect.width - 40) / 220);
-    
-    const row = Math.floor(projectAreaTasks.length / tasksInRow);
-    const col = projectAreaTasks.length % tasksInRow;
-
-    return {
-      x: 20 + col * 220,
-      y: 20 + row * 120
-    };
   }
 
   function handleDragStart(task, e) {
@@ -101,6 +314,7 @@ function ProjectConstructor() {
         taskType: task.id,
         x,
         y,
+        priority: "",
         deadline: "",
         assignee: "",
       },
@@ -113,12 +327,27 @@ function ProjectConstructor() {
   }
 
   function handleTaskMouseDown(taskId, e) {
+    // If we're currently editing and clicked on another task, save the edit
+    if (editingTask && editingTask !== taskId) {
+      saveEdit();
+    }
+
+    // Don't start drag if we're clicking on an input or select
+    if (e.target.closest('.inline-edit-input') || e.target.closest('.inline-edit-select')) {
+      return;
+    }
+
     // Проверяем, не является ли цель клика одной из кнопок действий
     if (e.target.closest('.task-action')) {
       return;
     }
 
     if (e.button !== 0) return;
+
+    // Остановить редактирование при начале перетаскивания
+    if (editingTask === taskId) {
+      saveEdit();
+    }
 
     const startPos = { x: e.clientX, y: e.clientY };
     const taskElement = e.currentTarget;
@@ -194,13 +423,44 @@ function ProjectConstructor() {
     }
   }
 
+  // Handle updating task properties
   function handleTaskUpdate(taskId, field, value) {
     setProjectAreaTasks(prev =>
-      prev.map(task => task.id === taskId ? { ...task, [field]: value } : task)
+      prev.map(task => {
+        if (task.id === taskId) {
+          const updatedTask = { ...task, [field]: value };
+          
+          // Optionally, update task on backend when a property changes
+          /*
+          if (task.id && task.id.toString().length > 10) {
+            try {
+              const apiFieldMap = {
+                'priority': 'priority',
+                'deadline': 'deadline',
+                'assignee': 'assignee_name',
+                'assigneeId': 'assignee',
+                'name': 'name'
+              };
+              
+              if (field in apiFieldMap) {
+                const updateData = { [apiFieldMap[field]]: value };
+                taskService.partialUpdate(task.id, updateData)
+                  .catch(err => console.error(`Error updating task ${field}:`, err));
+              }
+            } catch (err) {
+              console.error(`Error updating task ${field}:`, err);
+            }
+          }
+          */
+          
+          return updatedTask;
+        }
+        return task;
+      })
     );
   }
 
-  // Добавляем функцию для удаления связи по индексу
+  // Функция для удаления связи
   function removeConnection(index) {
     setConnections(prev => prev.filter((_, i) => i !== index));
   }
@@ -304,167 +564,289 @@ function ProjectConstructor() {
     });
   }
 
-  function saveProject() {
-    const projectName = prompt('Введите название проекта:');
-    if (!projectName) return;
-  
-    const newProject = {
-      id: crypto.randomUUID(),
-      title: projectName,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      data: {
-        tasks: projectAreaTasks,
-        connections: connections,
-        settings: {}
-      }
-    };
-  
-    const existingProjects = JSON.parse(localStorage.getItem('projects') || '[]');
-    localStorage.setItem('projects', JSON.stringify([...existingProjects, newProject]));
-    alert(`Проект "${projectName}" сохранен!`);
+  // Функция для начала редактирования поля задачи
+  function startEditing(task, field) {
+    setEditingTask(task.id);
+    setEditingField(field);
+    setEditValue(task[field] || "");
   }
 
-  const loadProject = (projectId) => {
-    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-    const project = projects.find(p => p.id === projectId);
-    
-    if (project) {
-      setProjectAreaTasks(project.data.tasks || []);
-      setConnections(project.data.connections || []);
+  // Функция для сохранения отредактированного значения
+  function saveEdit() {
+    if (editingTask && editingField) {
+      handleTaskUpdate(editingTask, editingField, editValue);
+      setEditingTask(null);
+      setEditingField(null);
     }
-  };
+  }
+
+  // Обработчик нажатия клавиш при редактировании
+  function handleEditKeyDown(e) {
+    if (e.key === 'Enter') {
+      saveEdit();
+    } else if (e.key === 'Escape') {
+      setEditingTask(null);
+      setEditingField(null);
+    }
+  }
+
+  // Функция для выбора сотрудника из списка
+  function handleAssigneeSelect(taskId, employeeId) {
+    const employee = employees.find(e => e.id === employeeId);
+    if (employee) {
+      handleTaskUpdate(taskId, "assignee", employee.name);
+      handleTaskUpdate(taskId, "assigneeId", employee.id);
+    } else {
+      handleTaskUpdate(taskId, "assignee", "");
+      handleTaskUpdate(taskId, "assigneeId", "");
+    }
+    setEditingTask(null);
+    setEditingField(null);
+  }
+
+  // Show loading indicator while fetching data
+  if (loadingData) {
+    return <div className="loading-message">Loading project data...</div>;
+  }
+
+  // Show error message if there was an error
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
 
   return (
     <div className="project-constructor">
-      <div className="tasks-panel">
-        <div className="tasks-panel-header">
-          <h3>Доступные задачи</h3>
-          <Button
-            text="+ Добавить задачу"
-            className="small add-button"
-            onClick={() => setShowTaskForm(true)}
-          />
+      <div className="project-header">
+        <input
+          type="text"
+          value={projectTitle}
+          onChange={(e) => setProjectTitle(e.target.value)}
+          placeholder="Название проекта"
+          className="project-title-input"
+        />
+        <Button
+          text={saving ? "Сохранение..." : "Сохранить проект"}
+          className={`save-button ${saving ? 'saving' : ''}`}
+          onClick={saveProject}
+          disabled={saving}
+        />
+      </div>
+      
+      <div className="project-content">
+        <div className="tasks-panel">
+          <div className="tasks-panel-header">
+            <h3>Доступные задачи</h3>
+            <Button
+              text="+ Добавить задачу"
+              className="small add-button"
+              onClick={() => setShowTaskForm(true)}
+            />
+          </div>
+
+          {showTaskForm && (
+            <div className="task-form">
+              <input
+                type="text"
+                value={newTaskName}
+                onChange={(e) => setNewTaskName(e.target.value)}
+                placeholder="Введите название задачи"
+                className="task-input"
+                onKeyDown={(e) => e.key === "Enter" && handleAddNewTask()}
+              />
+              <div className="form-buttons">
+                <Button
+                  text="Добавить"
+                  className="small confirm-button"
+                  onClick={handleAddNewTask}
+                />
+                <Button
+                  text="Отмена"
+                  className="small cancel-button"
+                  onClick={() => {
+                    setNewTaskName("");
+                    setShowTaskForm(false);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="tasks-list">
+            {initialTasks.map((task) => (
+              <div
+                key={task.id}
+                className="task"
+                draggable
+                onDragStart={(e) => handleDragStart(task, e)}
+              >
+                {task.name}
+              </div>
+            ))}
+          </div>
         </div>
 
-        {showTaskForm && (
-          <div className="task-form">
-            <input
-              type="text"
-              value={newTaskName}
-              onChange={(e) => setNewTaskName(e.target.value)}
-              placeholder="Введите название задачи"
-              className="task-input"
-              onKeyDown={(e) => e.key === "Enter" && handleAddNewTask()}
-            />
-            <div className="form-buttons">
-              <Button
-                text="Добавить"
-                className="small confirm-button"
-                onClick={handleAddNewTask}
-              />
-              <Button
-                text="Отмена"
-                className="small cancel-button"
-                onClick={() => {
-                  setNewTaskName("");
-                  setShowTaskForm(false);
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="tasks-list">
-          {initialTasks.map((task) => (
+        <div
+          ref={projectAreaRef}
+          className="project-area"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          <h3 className="area-title">Рабочая область</h3>
+          {projectAreaTasks.map((task) => (
             <div
               key={task.id}
-              className="task"
-              draggable
-              onDragStart={(e) => handleDragStart(task, e)}
+              ref={(el) => (taskElements.current[`task-${task.id}`] = el)}
+              className={`task ${selectedTask?.id === task.id ? "selected" : ""}`}
+              style={{
+                left: `${task.x}px`,
+                top: `${task.y}px`,
+                position: "absolute",
+              }}
+              onMouseDown={(e) => handleTaskMouseDown(task.id, e)}
             >
-              {task.name}
+              <div 
+                className="task-header" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (editingTask !== task.id || editingField !== "name") {
+                    startEditing(task, "name");
+                  }
+                }}
+              >
+                {editingTask === task.id && editingField === "name" ? (
+                  <input
+                    type="text"
+                    className="task-name-input"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={saveEdit}
+                    onKeyDown={handleEditKeyDown}
+                    autoFocus
+                  />
+                ) : task.name}
+              </div>
+              <div className="task-actions">
+                <div className="task-action" onClick={(e) => {
+                    e.stopPropagation();
+                    if (editingTask !== task.id || editingField !== "priority") {
+                      startEditing(task, "priority");
+                    }
+                }}>
+                  <span className="action-text">Указать приоритет</span>
+                  {editingTask === task.id && editingField === "priority" ? (
+                    <input
+                      type="text"
+                      className="inline-edit-input"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={saveEdit}
+                      onKeyDown={handleEditKeyDown}
+                      placeholder="Приоритет"
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="info-text">{task.priority || '—'}</span>
+                  )}
+                  <span className="action-icon">+</span>
+                </div>
+                <div className="task-action" onClick={(e) => {
+                    e.stopPropagation();
+                    if (editingTask !== task.id || editingField !== "deadline") {
+                      startEditing(task, "deadline");
+                    }
+                }}>
+                  <span className="action-text">Установить дедлайн</span>
+                  {editingTask === task.id && editingField === "deadline" ? (
+                    <input
+                      type="text"
+                      className="inline-edit-input"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={saveEdit}
+                      onKeyDown={handleEditKeyDown}
+                      placeholder="ДД/ММ/ГГГГ"
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="info-text">{task.deadline || '—'}</span>
+                  )}
+                  <span className="action-icon calendar">
+                    <img src="/calendar.svg" alt="calendar" />
+                  </span>
+                </div>
+                <div className="task-action" onClick={(e) => {
+                    e.stopPropagation();
+                    if (editingTask !== task.id || editingField !== "assignee") {
+                      startEditing(task, "assignee");
+                    }
+                }}>
+                  <span className="action-text">Назначить исполнителя</span>
+                  {editingTask === task.id && editingField === "assignee" ? (
+                    employees.length > 0 ? (
+                      <select
+                        className="inline-edit-select"
+                        value={task.assigneeId || ""}
+                        onChange={(e) => handleAssigneeSelect(task.id, e.target.value)}
+                        onBlur={() => {
+                          setEditingTask(null);
+                          setEditingField(null);
+                        }}
+                        autoFocus
+                      >
+                        <option value="">Не выбрано</option>
+                        {employees.map(emp => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        className="inline-edit-input"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={saveEdit}
+                        onKeyDown={handleEditKeyDown}
+                        placeholder="Исполнитель"
+                        autoFocus
+                      />
+                    )
+                  ) : (
+                    <span className="info-text">{task.assignee || '—'}</span>
+                  )}
+                  <span className="action-icon">👤</span>
+                </div>
+              </div>
             </div>
           ))}
-        </div>
-      </div>
 
-      <div
-        ref={projectAreaRef}
-        className="project-area"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
-        <h3 className="area-title">Рабочая область</h3>
-        {projectAreaTasks.map((task) => (
-          <div
-            key={task.id}
-            ref={(el) => (taskElements.current[`task-${task.id}`] = el)}
-            className={`task ${selectedTask?.id === task.id ? "selected" : ""}`}
+          <svg
+            className="connections"
             style={{
-              left: `${task.x}px`,
-              top: `${task.y}px`,
               position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
             }}
-            onMouseDown={(e) => handleTaskMouseDown(task.id, e)}
           >
-            <div className="task-header">{task.name}</div>
-            <div className="task-actions">
-              <div className="task-action" onClick={(e) => {
-                  e.stopPropagation();
-                  // Логика установки приоритета
-              }}>
-                <span className="action-text">Указать приоритет</span>
-                <span className="info-text">{task.priority || 'Без приоритета'}</span>
-                <span className="action-icon">+</span>
-              </div>
-              <div className="task-action" onClick={(e) => {
-                  e.stopPropagation();
-                  // Логика установки дедлайна
-              }}>
-                <span className="action-text">Установить дедлайн</span>
-                <span className="info-text">{task.deadline || '01/01/2010'}</span>
-                <span className="action-icon calendar">
-                  <img src="/calendar.svg" alt="calendar" />
-                </span>
-              </div>
-              <div className="task-action" onClick={(e) => {
-                  e.stopPropagation();
-                  // Логика назначения исполнителя
-              }}>
-                <span className="action-text">Назначить исполнителя</span>
-                <span className="info-text">{task.assignee || 'Петров А.В.'}</span>
-                <span className="action-icon">👤</span>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <svg
-          className="connections"
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-          }}
-        >
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
-              orient="auto"
-            >
-              <polygon points="0 0, 10 3.5, 0 7" fill="#5c2f91" />
-            </marker>
-          </defs>
-          {renderConnections()}
-        </svg>
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="7"
+                refX="9"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon points="0 0, 10 3.5, 0 7" fill="#5c2f91" />
+              </marker>
+            </defs>
+            {renderConnections()}
+          </svg>
+        </div>
       </div>
     </div>
   );

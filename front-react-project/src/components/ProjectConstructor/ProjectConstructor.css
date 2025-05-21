@@ -1,11 +1,61 @@
 .project-constructor {
     display: flex;
+    flex-direction: column;
     height: 100%; /* Растягиваем на всю высоту родителя (.project-editor-main) */
     width: 100%;  /* Добавляем, чтобы занять всю доступную ширину */
-    padding: 0 24px;
-    gap: 24px;
-    margin-bottom: 24px; /* Добавляем отступ снизу */
+    padding: 20px;
+    gap: 20px;
     box-sizing: border-box; /* Учитываем padding в размерах */
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #E5E5E5;
+    margin-bottom: 10px;
+}
+
+.project-title-input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 18px;
+    font-weight: 500;
+    border: 1px solid #E5E5E5;
+    border-radius: 6px;
+    color: #333;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.project-title-input:focus {
+    outline: none;
+    border-color: #5c2f91;
+    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.2);
+}
+
+.save-button {
+    margin-left: 16px;
+    padding: 10px 16px;
+    background-color: #5c2f91;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.save-button:hover {
+    background-color: #4a2578;
+}
+
+.project-content {
+    display: flex;
+    flex: 1;
+    gap: 24px;
+    overflow: hidden;
 }
 
 .tasks-panel {
@@ -19,6 +69,7 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    max-height: calc(100vh - 200px); /* Ограничиваем высоту, чтобы не выходило за пределы экрана */
 }
 
 .tasks-panel-header {
@@ -159,6 +210,26 @@
     font-size: 16px;
     padding-bottom: 12px;
     border-bottom: 1px solid #E5E5E5;
+    cursor: pointer;
+}
+
+.task-name-input {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 16px;
+    font-weight: 500;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s;
+    margin: -5px 0;
+    box-sizing: border-box;
+}
+
+.task-name-input:focus {
+    border-color: #5c2f91;
+    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.1);
 }
 
 .task-actions {
@@ -190,6 +261,8 @@
 .info-text {
     width: 120px; /* зафиксированная ширина для информации */
     text-align: center;
+    color: #777;
+    font-style: italic;
 }
 
 .action-icon {
@@ -249,4 +322,65 @@
 
 .connection-mode .task:hover {
     border-color: #5c2f91;
+}
+
+/* Стили для инлайн-редактирования */
+.inline-edit-input,
+.inline-edit-select {
+    width: 120px;
+    padding: 4px 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    text-align: center;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.inline-edit-input:focus,
+.inline-edit-select:focus {
+    border-color: #5c2f91;
+    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.1);
+}
+
+.inline-edit-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23666' d='M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414z'/%3E%3C/svg%3E");
+    background-position: right 5px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 25px;
+}
+
+.loading-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: 18px;
+    color: #666;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    font-size: 18px;
+    color: #d32f2f;
+    background-color: #ffebee;
+    border-radius: 8px;
+    margin: 20px 0;
+    padding: 20px;
+    text-align: center;
+}
+
+.save-button.saving {
+    background-color: #9c79cc;
+    cursor: not-allowed;
 }
