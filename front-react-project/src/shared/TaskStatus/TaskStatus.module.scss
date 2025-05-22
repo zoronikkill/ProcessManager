@@ -1,0 +1,105 @@
+.statusContainer {
+  position: relative;
+  display: inline-block;
+  width: 128px;
+}
+
+.statusButton {
+  width: 128px;
+  height: 50px;
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  
+  &:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.statusText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  flex-grow: 1;
+}
+
+.arrow {
+  font-size: 12px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.menu {
+  position: absolute;
+  top: 54px; // 50px высота кнопки + 4px отступ
+  left: 0;
+  width: 128px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0 0 5px 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease;
+  opacity: 0;
+  transform-origin: top;
+}
+
+.menuOpen {
+  max-height: 200px;
+  opacity: 1;
+}
+
+.menuItem {
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+  
+  &:last-child {
+    border-radius: 0 0 4px 4px;
+  }
+}
+
+// Цвета статусов
+.inProgress {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.completed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.received {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.frozen {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.default {
+  background-color: #e2e3e5;
+  color: #383d41;
+}

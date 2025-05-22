@@ -25,3 +25,10 @@ footer {
 .support_email:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 760px) {
+  .support_phone, 
+  .support_email {
+    font-size: 12px;
+  }
+}
