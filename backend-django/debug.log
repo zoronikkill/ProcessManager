@@ -512,3 +512,46 @@ Traceback (most recent call last):
     ...<9 lines>...
     )
 RuntimeError: You called this URL via POST, but the URL doesn't end in a slash and you have APPEND_SLASH set. Django can't redirect to the slash URL while maintaining POST data. Change your form to point to localhost:8000/api/auth/refresh/ (note the trailing slash), or set APPEND_SLASH=False in your Django settings.
+Watching for file changes with StatReloader
+Watching for file changes with StatReloader
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/
+Not Found: /api/tasks/1747851546006/

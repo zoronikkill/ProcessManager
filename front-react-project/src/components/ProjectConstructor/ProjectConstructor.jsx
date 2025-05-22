@@ -213,7 +213,6 @@ function ProjectConstructor() {
       }
       
       // Save individual tasks to backend if your API requires it
-      /*
       for (const task of projectAreaTasks) {
         try {
           const taskData = {
@@ -235,9 +234,9 @@ function ProjectConstructor() {
           }
         } catch (err) {
           console.error(`Error saving task ${task.name}:`, err);
+          // Continue with next task even if this one fails
         }
       }
-      */
       
     } catch (err) {
       console.error("Error saving project:", err);
@@ -306,19 +305,46 @@ function ProjectConstructor() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    setProjectAreaTasks([
-      ...projectAreaTasks,
-      {
-        ...task,
-        id: Date.now(),
-        taskType: task.id,
-        x,
-        y,
-        priority: "",
-        deadline: "",
-        assignee: "",
-      },
-    ]);
+    // Generate a unique ID for the new task
+    const newTaskId = Date.now();
+    
+    const newTask = {
+      ...task,
+      id: newTaskId,
+      taskType: task.id,
+      x,
+      y,
+      priority: "",
+      deadline: "",
+      assignee: "",
+      assigneeId: ""
+    };
+
+    setProjectAreaTasks([...projectAreaTasks, newTask]);
+    
+    // If a project is already saved (we have projectId), create the task in backend
+    if (projectId) {
+      try {
+        const taskData = {
+          name: task.name,
+          process: projectId,
+          position_x: x,
+          position_y: y
+        };
+        
+        // Create task in backend - this is async but we don't need to await
+        taskService.create(taskData)
+          .then(savedTask => {
+            // Update the task ID with the backend ID
+            setProjectAreaTasks(prev => 
+              prev.map(t => t.id === newTaskId ? { ...t, id: savedTask.id } : t)
+            );
+          })
+          .catch(err => console.error('Error creating task in backend:', err));
+      } catch (err) {
+        console.error('Error preparing task for backend:', err);
+      }
+    }
   }
 
   function handleDragOver(e) {
@@ -390,6 +416,22 @@ function ProjectConstructor() {
       if (!moved) {
         const task = projectAreaTasks.find((t) => t.id === taskId);
         handleTaskSelect(task);
+      } else {
+        // If the task was moved and has a backend ID, update position in backend
+        if (projectId && taskId.toString().length > 10) {
+          const task = projectAreaTasks.find((t) => t.id === taskId);
+          if (task) {
+            try {
+              // Update the task position in backend
+              taskService.partialUpdate(taskId, {
+                position_x: task.x,
+                position_y: task.y
+              }).catch(err => console.error('Error updating task position:', err));
+            } catch (err) {
+              console.error('Error preparing task position update:', err);
+            }
+          }
+        }
       }
     }
 
@@ -410,14 +452,26 @@ function ProjectConstructor() {
         setSelectedTask(null);
         return;
       }
-      setConnections([
-        ...connections,
-        {
-          from: selectedTask.id,
-          to: task.id,
-        },
-      ]);
+      
+      // Create a new connection
+      const newConnection = {
+        from: selectedTask.id,
+        to: task.id,
+      };
+      
+      setConnections([...connections, newConnection]);
       setSelectedTask(null);
+      
+      // If this is an existing project, save the connection to backend
+      if (projectId && selectedTask.id.toString().length > 10 && task.id.toString().length > 10) {
+        try {
+          // Create the task connection in the backend
+          taskService.createTaskRelation(selectedTask.id, task.id)
+            .catch(err => console.error('Error creating task connection:', err));
+        } catch (err) {
+          console.error('Error preparing task connection:', err);
+        }
+      }
     } else {
       setSelectedTask(task);
     }
@@ -431,7 +485,6 @@ function ProjectConstructor() {
           const updatedTask = { ...task, [field]: value };
           
           // Optionally, update task on backend when a property changes
-          /*
           if (task.id && task.id.toString().length > 10) {
             try {
               const apiFieldMap = {
@@ -451,7 +504,6 @@ function ProjectConstructor() {
               console.error(`Error updating task ${field}:`, err);
             }
           }
-          */
           
           return updatedTask;
         }
@@ -460,9 +512,25 @@ function ProjectConstructor() {
     );
   }
 
-  // Функция для удаления связи
+  // Function to remove a connection
   function removeConnection(index) {
+    const connection = connections[index];
     setConnections(prev => prev.filter((_, i) => i !== index));
+    
+    // If this is an existing project with backend task IDs, delete the connection
+    if (projectId && 
+        connection && 
+        connection.id && 
+        connection.from.toString().length > 10 && 
+        connection.to.toString().length > 10) {
+      try {
+        // Delete the task connection in the backend
+        taskService.removeTaskRelation(connection.id)
+          .catch(err => console.error('Error removing task connection:', err));
+      } catch (err) {
+        console.error('Error preparing task connection removal:', err);
+      }
+    }
   }
 
   function calculateConnectionPoints(fromTask, toTask) {
