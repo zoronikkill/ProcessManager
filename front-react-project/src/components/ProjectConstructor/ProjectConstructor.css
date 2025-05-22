@@ -148,3 +148,22 @@
   background-color: #dc3545;
   color: white;
 }
+
+.connection-line {
+  cursor: pointer;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.connection-line:hover {
+  stroke: #dc3545;
+  stroke-width: 3;
+}
+
+.delete-connection-btn {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.delete-connection-btn:hover {
+  transform: scale(1.2);
+}

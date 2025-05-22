@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import "./ProjectConstructor.css";
 import Button from "../Button/Button";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../api';
 
 function ProjectConstructor() {
   const [initialTasks, setInitialTasks] = useState([
@@ -15,12 +16,23 @@ function ProjectConstructor() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTaskName, setNewTaskName] = useState("");
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const projectAreaRef = useRef(null);
   const taskElements = useRef({});
   const { projectId } = useParams();
-  const [employees, setEmployees] = useState(
-    JSON.parse(localStorage.getItem('employees')) || []
-  );
+  const navigate = useNavigate();
+  const [employees, setEmployees] = useState([]);
+  const [selectedConnection, setSelectedConnection] = useState(null);
+
+  useEffect(() => {
+    loadEmployees();
+    if (projectId) {
+      loadProject(projectId);
+    } else {
+      setLoading(false);
+    }
+  }, [projectId]);
 
   useEffect(() => {
     const handleSave = () => saveProject();
@@ -28,26 +40,54 @@ function ProjectConstructor() {
     return () => document.removeEventListener('saveProject', handleSave);
   }, [projectAreaTasks, connections]);
 
-  useEffect(() => {
-    if (projectId) {
-      loadProject(projectId);
+  const loadEmployees = async () => {
+    try {
+      const response = await api.getEmployees();
+      setEmployees(response.data);
+    } catch (err) {
+      console.error("Ошибка загрузки сотрудников:", err);
     }
-  }, [projectId]);
+  };
 
-  useEffect(() => {
-    if (projectAreaTasks.length > 0 && connections.length > 0) {
-      const timer = setTimeout(() => {
-        setConnections([...connections]);
-      }, 100);
+  const loadProject = async (id) => {
+    try {
+      setLoading(true);
+      const response = await api.getProject(id);
+      const projectData = response.data;
+      setProjectAreaTasks(projectData.tasks || []);
+      setConnections(projectData.connections || []);
+      setError(null);
+    } catch (err) {
+      setError("Ошибка при загрузке проекта");
+      console.error("Ошибка загрузки проекта:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveProject = async () => {
+    const projectName = prompt('Введите название проекта:');
+    if (!projectName) return;
+  
+    try {
+      const projectData = {
+        title: projectName,
+        tasks: projectAreaTasks,
+        connections: connections
+      };
+
+      if (projectId) {
+        await api.updateProject(projectId, projectData);
+      } else {
+        const response = await api.saveProject(projectData);
+        navigate(`/editor/${response.data.id}`);
+      }
       
-      return () => clearTimeout(timer);
+      alert('Проект сохранен!');
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      alert('Ошибка при сохранении проекта');
     }
-  }, [projectAreaTasks]);
-
-  function handleSaveEmployee (employee){
-    const updatedEmployees = [...employees, employee];
-    setEmployees(updatedEmployees);
-    localStorage.setItem('employees', JSON.stringify(updatedEmployees));
   };
 
   function handleAddNewTask() {
@@ -272,6 +312,20 @@ function ProjectConstructor() {
     };
   }
 
+  function handleConnectionClick(connection, e) {
+    e.stopPropagation();
+    setSelectedConnection(connection);
+  }
+
+  function handleDeleteConnection() {
+    if (selectedConnection) {
+      setConnections(connections.filter(conn => 
+        !(conn.from === selectedConnection.from && conn.to === selectedConnection.to)
+      ));
+      setSelectedConnection(null);
+    }
+  }
+
   function renderConnections() {
     return connections.map((conn, index) => {
       const fromTask = projectAreaTasks.find((t) => t.id === conn.from);
@@ -285,56 +339,44 @@ function ProjectConstructor() {
         taskElements
       );
 
+      const isSelected = selectedConnection && 
+        selectedConnection.from === conn.from && 
+        selectedConnection.to === conn.to;
+
       return (
-        <line
-          key={index}
-          x1={fromPoint.x}
-          y1={fromPoint.y}
-          x2={toPoint.x}
-          y2={toPoint.y}
-          stroke="#5c2f91"
-          strokeWidth="2"
-          markerEnd="url(#arrowhead)"
-        />
+        <g key={index} onClick={(e) => handleConnectionClick(conn, e)}>
+          <line
+            x1={fromPoint.x}
+            y1={fromPoint.y}
+            x2={toPoint.x}
+            y2={toPoint.y}
+            stroke={isSelected ? "#dc3545" : "#5c2f91"}
+            strokeWidth={isSelected ? "3" : "2"}
+            markerEnd="url(#arrowhead)"
+            className="connection-line"
+          />
+          {isSelected && (
+            <circle
+              cx={(fromPoint.x + toPoint.x) / 2}
+              cy={(fromPoint.y + toPoint.y) / 2}
+              r="8"
+              fill="#dc3545"
+              className="delete-connection-btn"
+              onClick={handleDeleteConnection}
+            />
+          )}
+        </g>
       );
     });
   }
 
-  function saveProject() {
-    const projectName = prompt('Введите название проекта:');
-    if (!projectName) return;
-  
-    const newProject = {
-      id: crypto.randomUUID(),
-      title: projectName,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      data: {
-        tasks: projectAreaTasks,
-        connections: connections,
-        settings: {}
-      }
-    };
-  
-    const existingProjects = JSON.parse(localStorage.getItem('projects') || []);
-    localStorage.setItem('projects', JSON.stringify([...existingProjects, newProject]));
-    alert(`Проект "${projectName}" сохранен!`);
+  if (loading) {
+    return <div className="loading">Загрузка проекта...</div>;
   }
 
-  const loadProject = (projectId) => {
-  const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-  const project = projects.find(p => p.id === projectId);
-  
-  if (project) {
-    setProjectAreaTasks([]);
-    setConnections([]);
-
-    setTimeout(() => {
-      setProjectAreaTasks(project.data.tasks || []);
-      setConnections(project.data.connections || []);
-    }, 0);
+  if (error) {
+    return <div className="error">{error}</div>;
   }
-  };
 
   return (
     <div className="project-constructor">

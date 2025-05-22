@@ -2,23 +2,57 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import EmployeeForm from '../components/EmployeeForm/EmployeeForm';
+import api from '../api';
 import './EmployeesPage.css';
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const savedEmployees = JSON.parse(localStorage.getItem('employees')) || [];
-    setEmployees(savedEmployees);
+    loadEmployees();
   }, []);
 
-  const handleSave = (employee) => {
-    const updatedEmployees = [...employees, employee];
-    setEmployees(updatedEmployees);
-    localStorage.setItem('employees', JSON.stringify(updatedEmployees));
-    setShowForm(false);
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getEmployees();
+      setEmployees(response.data);
+      setError(null);
+    } catch (err) {
+      setError("Ошибка при загрузке сотрудников");
+      console.error("Ошибка загрузки сотрудников:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (employee) => {
+    try {
+      const response = await api.createEmployee(employee);
+      setEmployees([...employees, response.data]);
+      setShowForm(false);
+      setError(null);
+    } catch (err) {
+      setError("Ошибка при создании сотрудника");
+      console.error("Ошибка создания сотрудника:", err);
+    }
+  };
+
+  const handleDelete = async (employeeId) => {
+    if (window.confirm("Вы уверены, что хотите удалить этого сотрудника?")) {
+      try {
+        await api.deleteEmployee(employeeId);
+        setEmployees(employees.filter(emp => emp.id !== employeeId));
+        setError(null);
+      } catch (err) {
+        setError("Ошибка при удалении сотрудника");
+        console.error("Ошибка удаления сотрудника:", err);
+      }
+    }
   };
 
   const filteredEmployees = employees.filter(emp =>
@@ -26,12 +60,18 @@ const EmployeesPage = () => {
     emp.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (loading) {
+    return <div className="loading">Загрузка сотрудников...</div>;
+  }
+
   return (
     <div className="container">
       <Header />
       
       <div className="employees-page">
         <h1>Управление сотрудниками</h1>
+        
+        {error && <div className="error-message">{error}</div>}
         
         <div className="employees-controls">
           <input
@@ -70,6 +110,12 @@ const EmployeesPage = () => {
               <p><strong>Должность:</strong> {employee.position}</p>
               <p><strong>Отдел:</strong> {employee.department}</p>
               <p><strong>Email:</strong> {employee.email}</p>
+              <button 
+                onClick={() => handleDelete(employee.id)}
+                className="delete-btn"
+              >
+                Удалить
+              </button>
             </div>
           ))}
         </div>
