@@ -124,7 +124,8 @@
 
 /* Optional: Adjust specific button styles if needed */
 .form-buttons .button.confirm-button {
-    /* Specific styles for confirm button */
+    background-color: #5c2f91;
+    color: white;
 }
 
 .form-buttons .button.cancel-button {

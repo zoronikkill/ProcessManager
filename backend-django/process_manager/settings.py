@@ -83,7 +83,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'process_manager_db',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',  # Измените на ваш пароль
+        'PASSWORD': 'utyz@2005',  # Измените на ваш пароль
         'HOST': 'localhost',
         'PORT': '5432',
     }

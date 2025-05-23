@@ -3,7 +3,7 @@
 Эти сериализаторы должны быть добавлены в файл serializers.py в вашем Django-приложении.
 """
 from rest_framework import serializers
-from .models import (
+from django_models import (
     Department, Employee, ProcessTemplate, Process, 
     TaskType, Task, TaskConnection, TaskComment, Notification
 )

@@ -21,7 +21,9 @@ const EmployeesPage = () => {
     try {
       setLoading(true);
       const data = await employeeService.getAll();
-      setEmployees(data);
+      // Проверяем, что data является массивом, если нет - преобразуем в массив
+      const employeesArray = Array.isArray(data) ? data : data?.results || [];
+      setEmployees(employeesArray);
       setError(null);
     } catch (err) {
       console.error("Ошибка при загрузке сотрудников:", err);
