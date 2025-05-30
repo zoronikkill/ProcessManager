@@ -7,13 +7,16 @@ import style from './App.module.scss'
 import Header from './components/header/Header';
 import Task from './components/Task/Task';
 import Footer from './components/Footer/Footer';
+import TasksList from './components/TaskList/TaskList';
 
 
 function App() {
   return (
     <div className={style.body}>
+      {/* Описание задачи */}
       <Header title="Описание задачи" />
-      <Task />
+      {/* <Task /> */}
+      <TasksList />
       <Footer />
     </div>
   );

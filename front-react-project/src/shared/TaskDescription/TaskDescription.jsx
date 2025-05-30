@@ -1,8 +1,9 @@
 import style from "./TaskDescription.module.scss";
 
-const TaskDescription = () => {
+const TaskDescription = ({ task_text }) => {
   return(
     <div className={style.task_description}>
+      {task_text}
       texttexttexttext
       texttexttexttext
       texttexttexttext

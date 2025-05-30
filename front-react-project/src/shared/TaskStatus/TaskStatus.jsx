@@ -5,11 +5,11 @@ const TaskStatus = () => {
   const [status, setStatus] = useState("в работе");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const statusOptions = ["в работе", "Завершено", "Получено", "Заморожено"];
+  const statusOptions = ["В работе", "Завершено", "Получено", "Заморожено"];
 
   const getStatusColor = () => {
     switch (status) {
-      case "в работе":
+      case "В работе":
         return style.inProgress;
       case "Завершено":
         return style.completed;

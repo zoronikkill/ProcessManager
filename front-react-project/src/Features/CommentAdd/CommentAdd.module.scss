@@ -1,7 +1,19 @@
 .comment__container{
     display: flex;
-    align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+}
+
+.comment_panel {
+    width: 100%;
+    height: 40px;
+}
+
+.comment_button {
+    display: flex;
+    flex-direction: row;
+    align-self: flex-end;
+    width: fit-content;
 }
