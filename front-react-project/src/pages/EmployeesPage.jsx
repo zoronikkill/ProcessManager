@@ -1,126 +1,112 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { userStorage } from '../storage';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
-import EmployeeForm from '../components/EmployeeForm/EmployeeForm';
-import api from '../api';
 import './EmployeesPage.css';
 
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadEmployees();
+    const fetchEmployees = () => {
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const employees = users.filter(user => user.role === 'employee');
+        setEmployees(employees);
+        setLoading(false);
+      } catch (err) {
+        setError('Ошибка при загрузке сотрудников');
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
   }, []);
 
-  const loadEmployees = async () => {
-    try {
-      setLoading(true);
-      const response = await api.getEmployees();
-      setEmployees(response.data);
-      setError(null);
-    } catch (err) {
-      setError("Ошибка при загрузке сотрудников");
-      console.error("Ошибка загрузки сотрудников:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async (employee) => {
-    try {
-      const response = await api.createEmployee(employee);
-      setEmployees([...employees, response.data]);
-      setShowForm(false);
-      setError(null);
-    } catch (err) {
-      setError("Ошибка при создании сотрудника");
-      console.error("Ошибка создания сотрудника:", err);
-    }
-  };
-
-  const handleDelete = async (employeeId) => {
-    if (window.confirm("Вы уверены, что хотите удалить этого сотрудника?")) {
+  const handleDelete = (id) => {
+    if (window.confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
       try {
-        await api.deleteEmployee(employeeId);
-        setEmployees(employees.filter(emp => emp.id !== employeeId));
-        setError(null);
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const updatedUsers = users.filter(user => user.id !== id);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        setEmployees(employees.filter(emp => emp.id !== id));
       } catch (err) {
-        setError("Ошибка при удалении сотрудника");
-        console.error("Ошибка удаления сотрудника:", err);
+        setError('Ошибка при удалении сотрудника');
       }
     }
   };
 
   const filteredEmployees = employees.filter(emp =>
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.position.toLowerCase().includes(searchTerm.toLowerCase())
+    emp.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
-    return <div className="loading">Загрузка сотрудников...</div>;
+    return (
+      <div className="container">
+        <Header />
+        <div className="loading">Загрузка сотрудников...</div>
+        <Footer />
+      </div>
+    );
   }
 
   return (
     <div className="container">
       <Header />
-      
       <div className="employees-page">
-        <h1>Управление сотрудниками</h1>
-        
-        {error && <div className="error-message">{error}</div>}
-        
-        <div className="employees-controls">
-          <input
-            type="text"
-            placeholder="Поиск сотрудников..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-          <button 
-            onClick={() => setShowForm(true)}
-            className="add-employee-btn"
-          >
-            + Добавить сотрудника
-          </button>
+        <div className="employees-header">
+          <h1>Сотрудники</h1>
+          <div className="employees-controls">
+            <input
+              type="text"
+              placeholder="Поиск по имени, email, должности или отделу..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            <Link to="/register-employee" className="add-employee-btn">
+              + Добавить сотрудника
+            </Link>
+          </div>
         </div>
 
-        {showForm && (
-          <div className="employee-form-modal">
-            <div className="modal-content">
-              <EmployeeForm onSave={handleSave} />
-              <button 
-                onClick={() => setShowForm(false)}
-                className="close-btn"
-              >
-                Закрыть
-              </button>
-            </div>
-          </div>
-        )}
+        {error && <div className="error-message">{error}</div>}
 
-        <div className="employee-list">
+        <div className="employees-grid">
           {filteredEmployees.map(employee => (
             <div key={employee.id} className="employee-card">
-              <h3>{employee.name}</h3>
-              <p><strong>Должность:</strong> {employee.position}</p>
-              <p><strong>Отдел:</strong> {employee.department}</p>
-              <p><strong>Email:</strong> {employee.email}</p>
-              <button 
-                onClick={() => handleDelete(employee.id)}
-                className="delete-btn"
-              >
-                Удалить
-              </button>
+              <div className="employee-info">
+                <h3>{employee.username}</h3>
+                <p className="email">{employee.email}</p>
+                {employee.position && (
+                  <p className="position">Должность: {employee.position}</p>
+                )}
+                {employee.department && (
+                  <p className="department">Отдел: {employee.department}</p>
+                )}
+                <p className="date">
+                  Дата регистрации: {new Date(employee.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <div className="employee-actions">
+                <button 
+                  onClick={() => handleDelete(employee.id)}
+                  className="delete-btn"
+                >
+                  Удалить
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
-
       <Footer />
     </div>
   );

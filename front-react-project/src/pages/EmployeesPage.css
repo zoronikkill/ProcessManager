@@ -5,74 +5,116 @@
 }
 
 .employees-page {
-  flex: 1;
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  width: 100%;
+}
+
+.employees-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.employees-header h1 {
+  margin: 0;
+  color: #333;
 }
 
 .employees-controls {
   display: flex;
   gap: 15px;
-  margin-bottom: 20px;
+  align-items: center;
 }
 
 .search-input {
-  flex: 1;
-  padding: 10px;
+  padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 14px;
+  width: 250px;
 }
 
 .add-employee-btn {
-  background: #5c2f91;
+  padding: 8px 16px;
+  background-color: #5c2f91;
   color: white;
   border: none;
-  padding: 10px 15px;
   border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
   cursor: pointer;
-  white-space: nowrap;
+  transition: background-color 0.2s;
 }
 
 .add-employee-btn:hover {
-  background: #4a2475;
+  background-color: #4a2573;
 }
 
-.employee-list {
+.employees-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
 
 .employee-card {
-  background: #fff;
-  padding: 15px;
+  background: white;
   border-radius: 8px;
+  padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.employee-card h3 {
-  color: #5c2f91;
-  margin-top: 0;
+.employee-info h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.employee-info .email {
+  color: #666;
+  margin: 5px 0;
+}
+
+.employee-info .date {
+  color: #888;
+  font-size: 0.9em;
+  margin: 5px 0;
+}
+
+.employee-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .delete-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #dc3545;
+  padding: 6px 12px;
+  background-color: #dc3545;
   color: white;
   border: none;
-  padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  transition: background-color 0.2s;
 }
 
 .delete-btn:hover {
-  background: #c82333;
+  background-color: #c82333;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
 }
 
 .employee-form-modal {

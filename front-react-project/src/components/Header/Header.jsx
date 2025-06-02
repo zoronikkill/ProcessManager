@@ -1,15 +1,54 @@
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
-import { Link } from 'react-router-dom';
+import Button from '../Button/Button';
+import { userStorage } from '../../storage';
 
 function Header() {
+  const navigate = useNavigate();
+  const currentUser = userStorage.getCurrentUser();
+
+  const handleLogout = () => {
+    userStorage.logout();
+    navigate('/login');
+  };
+
+  const handleAddEmployee = () => {
+    navigate('/register-employee');
+  };
+
   return (
-    <header>
-      <div className="profile-icon">
-        <img src="profile-icon.png" alt="Profile" />
-      </div>
-      <div className="nav">
-        <Link to="/" className="title">Конструктор проектов</Link>
-        <Link to="/employees" className="nav-link">Сотрудники</Link>
+    <header className="header">
+      <div className="header-content">
+        <div className="logo">
+          <Link to="/">Менеджер проектов</Link>
+        </div>
+        <nav className="nav-links">
+          {currentUser ? (
+            <>
+              <Link to="/projects">Проекты</Link>
+              {currentUser.role === 'admin' && (
+                <>
+                  <Link to="/employees">Сотрудники</Link>
+                  <Button 
+                    text="Добавить сотрудника" 
+                    className="small secondary" 
+                    onClick={handleAddEmployee}
+                  />
+                </>
+              )}
+              <div className="user-info">
+                <span>{currentUser.username}</span>
+                <Button text="Выйти" className="small secondary" onClick={handleLogout} />
+              </div>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Войти</Link>
+              <Link to="/register">Регистрация</Link>
+            </>
+          )}
+        </nav>
       </div>
     </header>
   );
