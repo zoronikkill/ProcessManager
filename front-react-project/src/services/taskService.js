@@ -3,40 +3,51 @@ import apiService from './apiService';
 /**
  * Сервис для управления задачами
  */
-class TaskService {
-  /**
-   * Базовый эндпоинт для API задач
-   */
-  constructor() {
-    this.endpoint = '/tasks';
-  }
-
+export const taskService = {
   /**
    * Получает список всех задач
    * @param {Object} params - Параметры запроса для фильтрации
    * @returns {Promise<Array>} - Массив задач
    */
-  async getAll(params = {}) {
-    return apiService.get(this.endpoint, params);
-  }
+  getAll: async (params = {}) => {
+    try {
+      const response = await apiService.get('/tasks', params);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      return [];
+    }
+  },
 
   /**
    * Получает данные конкретной задачи
    * @param {string|number} id - Идентификатор задачи
    * @returns {Promise<Object>} - Данные задачи
    */
-  async getById(id) {
-    return apiService.get(`${this.endpoint}/${id}`);
-  }
+  getById: async (id) => {
+    try {
+      const response = await apiService.get(`/tasks/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task:', error);
+      return null;
+    }
+  },
 
   /**
    * Создает новую задачу
    * @param {Object} taskData - Данные новой задачи
    * @returns {Promise<Object>} - Созданная задача
    */
-  async create(taskData) {
-    return apiService.post(this.endpoint, taskData);
-  }
+  create: async (taskData) => {
+    try {
+      const response = await apiService.post('/tasks', taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
+  },
 
   /**
    * Обновляет данные задачи
@@ -44,9 +55,15 @@ class TaskService {
    * @param {Object} taskData - Обновленные данные задачи
    * @returns {Promise<Object>} - Обновленная задача
    */
-  async update(id, taskData) {
-    return apiService.put(`${this.endpoint}/${id}`, taskData);
-  }
+  update: async (id, taskData) => {
+    try {
+      const response = await apiService.put(`/tasks/${id}`, taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating task:', error);
+      return null;
+    }
+  },
 
   /**
    * Частично обновляет данные задачи
@@ -54,27 +71,44 @@ class TaskService {
    * @param {Object} taskData - Частичные данные для обновления
    * @returns {Promise<Object>} - Обновленная задача
    */
-  async partialUpdate(id, taskData) {
-    return apiService.patch(`${this.endpoint}/${id}`, taskData);
-  }
+  partialUpdate: async (id, taskData) => {
+    try {
+      const response = await apiService.patch(`/tasks/${id}`, taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Error partially updating task:', error);
+      return null;
+    }
+  },
 
   /**
    * Удаляет задачу
    * @param {string|number} id - Идентификатор задачи
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  async delete(id) {
-    return apiService.delete(`${this.endpoint}/${id}`);
-  }
+  delete: async (id) => {
+    try {
+      await apiService.delete(`/tasks/${id}`);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  },
 
   /**
    * Получает подзадачи для задачи
    * @param {string|number} id - Идентификатор родительской задачи
    * @returns {Promise<Array>} - Массив подзадач
    */
-  async getSubtasks(id) {
-    return apiService.get(`${this.endpoint}/${id}/subtasks`);
-  }
+  getSubtasks: async (id) => {
+    try {
+      const response = await apiService.get(`/tasks/${id}/subtasks`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching subtasks:', error);
+      return [];
+    }
+  },
 
   /**
    * Обновляет статус задачи
@@ -82,9 +116,15 @@ class TaskService {
    * @param {string} status - Новый статус задачи
    * @returns {Promise<Object>} - Обновленная задача
    */
-  async updateStatus(id, status) {
-    return apiService.patch(`${this.endpoint}/${id}/status`, { status });
-  }
+  updateStatus: async (id, status) => {
+    try {
+      const response = await apiService.patch(`/tasks/${id}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      return null;
+    }
+  },
 
   /**
    * Назначает сотрудника на задачу
@@ -92,9 +132,15 @@ class TaskService {
    * @param {string|number} employeeId - Идентификатор сотрудника
    * @returns {Promise<Object>} - Обновленная задача
    */
-  async assignEmployee(taskId, employeeId) {
-    return apiService.post(`${this.endpoint}/${taskId}/assign`, { employee_id: employeeId });
-  }
+  assignEmployee: async (taskId, employeeId) => {
+    try {
+      const response = await apiService.post(`/tasks/${taskId}/assign`, { employee_id: employeeId });
+      return response.data;
+    } catch (error) {
+      console.error('Error assigning employee to task:', error);
+      return null;
+    }
+  },
 
   /**
    * Создает связь между задачами (предшественник/последователь)
@@ -103,22 +149,31 @@ class TaskService {
    * @param {string} relationType - Тип связи (например, "finishToStart", "startToStart" и т.д.)
    * @returns {Promise<Object>} - Созданная связь
    */
-  async createTaskRelation(sourceTaskId, targetTaskId, relationType = 'finishToStart') {
-    return apiService.post(`${this.endpoint}/relations`, {
-      source_task_id: sourceTaskId,
-      target_task_id: targetTaskId,
-      relation_type: relationType
-    });
-  }
+  createTaskRelation: async (sourceTaskId, targetTaskId, relationType = 'finishToStart') => {
+    try {
+      const response = await apiService.post('/tasks/relations', {
+        source_task_id: sourceTaskId,
+        target_task_id: targetTaskId,
+        relation_type: relationType
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating task relation:', error);
+      return null;
+    }
+  },
 
   /**
    * Удаляет связь между задачами
    * @param {string|number} relationId - Идентификатор связи
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  async removeTaskRelation(relationId) {
-    return apiService.delete(`${this.endpoint}/relations/${relationId}`);
+  removeTaskRelation: async (relationId) => {
+    try {
+      await apiService.delete(`/tasks/relations/${relationId}`);
+    } catch (error) {
+      console.error('Error removing task relation:', error);
+      return false;
+    }
   }
-}
-
-export default new TaskService();
+};

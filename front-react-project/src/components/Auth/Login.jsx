@@ -1,28 +1,38 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useAuth } from '../../contexts/AuthContext';
+import Header from '../Header/Header';
+import Footer from '../Footer/Footer';
 import './Auth.css';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage('');
+    setError('');
     setLoading(true);
-    
+
     try {
-      await login(username, password);
-      // После успешного входа перенаправляем на страницу проектов
+      await login(formData);
       navigate('/projects');
-    } catch (error) {
-      console.error('Login error:', error);
-      setErrorMessage('Неверный логин или пароль. Пожалуйста, попробуйте снова.');
+    } catch (err) {
+      setError(err.message || 'Ошибка при входе в систему');
     } finally {
       setLoading(false);
     }
@@ -30,35 +40,43 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <form onSubmit={handleSubmit}>
-        <h2>Вход</h2>
-        {errorMessage && <div className="error-message">{errorMessage}</div>}
-        <input
-          type="text"
-          placeholder="Имя пользователя"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          disabled={loading}
-          required
-          name="username"
-        />
-        <input
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
-          required
-          name="password"
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Выполняется вход...' : 'Войти'}
-        </button>
+      <Header />
+      <div className="auth-form-container">
+        <h2>Вход в систему</h2>
+        {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email">Email:</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Пароль:</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? 'Вход...' : 'Войти'}
+          </button>
+        </form>
         <div className="auth-links">
           <Link to="/register">Регистрация</Link>
-          <Link to="/reset-password">Забыли пароль?</Link>
+          <Link to="/forgot-password">Забыли пароль?</Link>
         </div>
-      </form>
+      </div>
+      <Footer />
     </div>
   );
 };

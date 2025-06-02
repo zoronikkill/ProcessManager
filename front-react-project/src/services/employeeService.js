@@ -3,40 +3,51 @@ import apiService from './apiService';
 /**
  * Сервис для управления данными сотрудников
  */
-class EmployeeService {
-  /**
-   * Базовый эндпоинт для API сотрудников
-   */
-  constructor() {
-    this.endpoint = '/employees';
-  }
-
+export const employeeService = {
   /**
    * Получает список всех сотрудников
    * @param {Object} params - Параметры запроса для фильтрации (отдел, должность и т.д.)
    * @returns {Promise<Array>} - Массив сотрудников
    */
-  async getAll(params = {}) {
-    return apiService.get(this.endpoint, params);
-  }
+  getAll: async (params = {}) => {
+    try {
+      const response = await apiService.get('/employees', params);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      return [];
+    }
+  },
 
   /**
    * Получает данные конкретного сотрудника
    * @param {string|number} id - Идентификатор сотрудника
    * @returns {Promise<Object>} - Данные сотрудника
    */
-  async getById(id) {
-    return apiService.get(`${this.endpoint}/${id}`);
-  }
+  getById: async (id) => {
+    try {
+      const response = await apiService.get(`/employees/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching employee:', error);
+      return null;
+    }
+  },
 
   /**
    * Создает нового сотрудника
    * @param {Object} employeeData - Данные нового сотрудника
    * @returns {Promise<Object>} - Созданный сотрудник
    */
-  async create(employeeData) {
-    return apiService.post(this.endpoint, employeeData);
-  }
+  create: async (employeeData) => {
+    try {
+      const response = await apiService.post('/employees', employeeData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      throw error;
+    }
+  },
 
   /**
    * Обновляет данные сотрудника
@@ -44,9 +55,15 @@ class EmployeeService {
    * @param {Object} employeeData - Обновленные данные сотрудника
    * @returns {Promise<Object>} - Обновленный сотрудник
    */
-  async update(id, employeeData) {
-    return apiService.put(`${this.endpoint}/${id}`, employeeData);
-  }
+  update: async (id, employeeData) => {
+    try {
+      const response = await apiService.put(`/employees/${id}`, employeeData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      return null;
+    }
+  },
 
   /**
    * Частично обновляет данные сотрудника
@@ -54,27 +71,30 @@ class EmployeeService {
    * @param {Object} employeeData - Частичные данные для обновления
    * @returns {Promise<Object>} - Обновленный сотрудник
    */
-  async partialUpdate(id, employeeData) {
-    return apiService.patch(`${this.endpoint}/${id}`, employeeData);
-  }
+  partialUpdate: async (id, employeeData) => {
+    return apiService.patch(`/employees/${id}`, employeeData);
+  },
 
   /**
    * Удаляет сотрудника
    * @param {string|number} id - Идентификатор сотрудника
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  async delete(id) {
-    return apiService.delete(`${this.endpoint}/${id}`);
-  }
+  delete: async (id) => {
+    try {
+      await apiService.delete(`/employees/${id}`);
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      throw error;
+    }
+  },
 
   /**
    * Получает задачи, назначенные сотруднику
    * @param {string|number} id - Идентификатор сотрудника
    * @returns {Promise<Array>} - Массив задач
    */
-  async getTasks(id) {
-    return apiService.get(`${this.endpoint}/${id}/tasks`);
+  getTasks: async (id) => {
+    return apiService.get(`/employees/${id}/tasks`);
   }
-}
-
-export default new EmployeeService();
+};

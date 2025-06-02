@@ -1,111 +1,95 @@
-header {
+.header {
   background-color: #5c2f91;
+  padding: 0.5rem 2rem;
   color: white;
-  padding: 10px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.nav-link {
+.logo a {
   color: white;
   text-decoration: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-}
-
-.nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.nav .title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: bold;
-  color: lightblue;
-  text-decoration: none;
 }
 
-.profile-area {
+.nav-links {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #e0e0e0;
 }
 
 .user-info {
   display: flex;
-  flex-direction: column;
-  text-align: right;
+  align-items: center;
+  gap: 1rem;
 }
 
 .user-info span {
-  font-weight: 500;
-  font-size: 14px;
+  color: white;
+  font-size: 1rem;
 }
 
-.profile-icon {
-  position: relative;
+.user-info button {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-info button:hover {
+  background-color: white;
+  color: #5c2f91;
+}
+
+.nav-links .small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-links .small:hover {
+  opacity: 0.9;
+}
+
+.add-employee-btn {
+  background-color: #4CAF50;
+  margin-left: 0.5rem;
+}
+
+.add-employee-btn:hover {
+  background-color: #45a049;
 }
 
 .profile-icon img {
-  width: 36px;
-  height: 36px;
+  float: right;
+  margin-right: 5px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: 2px solid white;
-}
-
-.profile-icon:hover .dropdown-menu {
-  display: block;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 45px;
-  right: 0;
-  background-color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 8px;
-  min-width: 150px;
-  display: none;
-  z-index: 100;
-}
-
-.logout-btn {
-  display: block;
-  width: 100%;
-  padding: 8px;
-  text-align: left;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: #333;
-}
-
-.logout-btn:hover {
-  background-color: #f0f0f0;
-}
-
-.auth-links {
-  display: flex;
-  gap: 10px;
-}
-
-.auth-link {
-  color: white;
-  text-decoration: none;
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.auth-link:hover {
-  background-color: rgba(255, 255, 255, 0.3);
 }

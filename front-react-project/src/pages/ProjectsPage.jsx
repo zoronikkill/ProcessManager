@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import processService from "../services/processService";
+import { Link, useNavigate } from "react-router-dom";
+import { projectService } from "../services/projectService";
 import "./ProjectsPage.css";
 
 const ProjectsPage = () => {
@@ -8,6 +8,7 @@ const ProjectsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Загрузка проектов при монтировании компонента
   useEffect(() => {
@@ -18,56 +19,34 @@ const ProjectsPage = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Используем processService вместо projectService
-      const result = await processService.getAll();
-      // Преобразуем данные из формата API
-      const data = Array.isArray(result.results) ? result.results : (result || []);
+      const data = await projectService.getAll();
       setProjects(data);
       setError(null);
     } catch (err) {
-      console.error("Ошибка при загрузке проектов:", err);
-      setError("Не удалось загрузить список проектов. Пожалуйста, попробуйте позже.");
-      
-      // Временное решение: использовать данные из localStorage при ошибке API
-      const savedProjects = JSON.parse(localStorage.getItem("projects") || "[]");
-      setProjects(savedProjects);
+      console.error("Error fetching projects:", err);
+      setError("Не удалось загрузить проекты. Пожалуйста, попробуйте позже.");
     } finally {
       setLoading(false);
     }
   };
 
   // Обработчик удаления проекта
-  const handleDeleteProject = async (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Вы уверены, что хотите удалить этот проект?")) {
       try {
-        await processService.delete(id);
+        await projectService.delete(id);
         setProjects(projects.filter(project => project.id !== id));
-        // Синхронизировать localStorage после успешного API-запроса
-        const updatedProjects = projects.filter(project => project.id !== id);
-        localStorage.setItem("projects", JSON.stringify(updatedProjects));
       } catch (err) {
-        console.error("Ошибка при удалении проекта:", err);
-        alert("Не удалось удалить проект. Пожалуйста, попробуйте позже.");
-        
-        if (err.status === 401) {
-          // Обработка ошибки авторизации
-          alert("Требуется авторизация. Пожалуйста, войдите в систему.");
-          // Можно добавить редирект на страницу логина
-          // window.location.href = '/login';
-          return;
-        }
-        
-        // Временное локальное удаление при ошибке API
-        const updatedProjects = projects.filter(project => project.id !== id);
-        setProjects(updatedProjects);
-        localStorage.setItem("projects", JSON.stringify(updatedProjects));
+        console.error("Error deleting project:", err);
+        setError("Не удалось удалить проект. Пожалуйста, попробуйте позже.");
       }
     }
   };
 
-  // Фильтрация проектов по поисковому запросу (используем title для процессов)
-  const filteredProjects = projects.filter((project) =>
-    (project.title || project.name || '')?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Фильтрация проектов по поисковому запросу
+  const filteredProjects = projects.filter(project =>
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Функция создания нового проекта и перехода в редактор
@@ -75,7 +54,7 @@ const ProjectsPage = () => {
     const projectName = prompt("Введите название нового проекта:");
     if (projectName) {
       try {
-        const newProject = await processService.create({
+        const newProject = await projectService.create({
           title: projectName,
           description: "",
           status: "draft",
@@ -87,35 +66,17 @@ const ProjectsPage = () => {
         });
         
         setProjects([...projects, newProject]);
-        
-        // Перенаправление в редактор с ID нового проекта
-        window.location.href = `/editor/${newProject.id}`;
+        navigate(`/editor/${newProject.id}`);
       } catch (err) {
         console.error("Ошибка при создании проекта:", err);
-        alert("Не удалось создать проект. Пожалуйста, попробуйте позже.");
-        
-        // Временное решение: создать проект локально при ошибке API
-        const newProject = {
-          id: crypto.randomUUID(),
-          title: projectName,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          data: {
-            tasks: [],
-            connections: [],
-            settings: {}
-          }
-        };
-        
-        const updatedProjects = [...projects, newProject];
-        setProjects(updatedProjects);
-        localStorage.setItem("projects", JSON.stringify(updatedProjects));
-        
-        // Перенаправление в редактор с ID нового проекта
-        window.location.href = `/editor/${newProject.id}`;
+        setError("Не удалось создать проект. Пожалуйста, попробуйте позже.");
       }
     }
   };
+
+  if (loading) {
+    return <div className="loading">Загрузка проектов...</div>;
+  }
 
   return (
     <div className="container">
@@ -141,48 +102,38 @@ const ProjectsPage = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        {loading ? (
-          <div className="loading-indicator">Загрузка проектов...</div>
-        ) : (
-          <div className="projects-grid">
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map((project) => (
-                <div key={project.id} className="project-card">
-                  <h3>{project.title || project.name}</h3>
-                  <div className="project-meta">
-                    <span>
-                      Создан: {new Date(project.created_at || project.createdAt).toLocaleDateString()}
-                    </span>
-                    <span>
-                      Изменен: {new Date(project.updated_at || project.updatedAt).toLocaleDateString()}
-                    </span>
-                    <span>
-                      Статус: {project.status_display || project.status}
-                    </span>
-                  </div>
-                  <div className="project-actions">
-                    <Link to={`/editor/${project.id}`} className="button edit">
-                      Открыть
-                    </Link>
-                    <button 
-                      className="button danger"
-                      onClick={() => handleDeleteProject(project.id)}
-                    >
-                      Удалить
-                    </button>
-                  </div>
+        <div className="projects-grid">
+          {filteredProjects.length > 0 ? (
+            filteredProjects.map((project) => (
+              <div key={project.id} className="project-card">
+                <h3>{project.title}</h3>
+                <p>{project.description}</p>
+                <div className="project-info">
+                  <span className="status">Статус: {project.status}</span>
+                  <span className="deadline">Дедлайн: {new Date(project.endDate).toLocaleDateString()}</span>
                 </div>
-              ))
-            ) : (
-              <div className="no-projects">
-                {searchQuery 
-                  ? "Нет проектов, соответствующих поисковому запросу" 
-                  : "У вас ещё нет проектов. Нажмите «Создать проект», чтобы начать."
-                }
+                <div className="project-actions">
+                  <Link to={`/projects/${project.id}`} className="edit-button">
+                    Редактировать
+                  </Link>
+                  <button 
+                    className="delete-button"
+                    onClick={() => handleDelete(project.id)}
+                  >
+                    Удалить
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="no-projects">
+              {searchQuery 
+                ? "Нет проектов, соответствующих поисковому запросу" 
+                : "У вас ещё нет проектов. Нажмите «Создать проект», чтобы начать."
+              }
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -4,13 +4,15 @@ import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import './Auth.css';
 
-const Register = () => {
+const EmployeeRegister = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    position: '',
+    department: ''
   });
   const [error, setError] = useState('');
 
@@ -46,34 +48,40 @@ const Register = () => {
       return;
     }
 
+    if (!formData.position.trim()) {
+      setError('Пожалуйста, укажите должность');
+      return;
+    }
+
+    if (!formData.department.trim()) {
+      setError('Пожалуйста, укажите отдел');
+      return;
+    }
+
     try {
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       
-      const adminExists = users.some(user => user.role === 'admin');
-      if (adminExists) {
-        setError('Администратор уже зарегистрирован в системе');
-        return;
-      }
-
       if (users.some(user => user.email === formData.email)) {
         setError('Пользователь с таким email уже существует');
         return;
       }
 
-      const newAdmin = {
+      const newEmployee = {
         id: Date.now().toString(),
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: 'admin',
+        position: formData.position,
+        department: formData.department,
+        role: 'employee',
         created_at: new Date().toISOString()
       };
 
-      users.push(newAdmin);
+      users.push(newEmployee);
       localStorage.setItem('users', JSON.stringify(users));
-      navigate('/login');
+      navigate('/employees');
     } catch (err) {
-      setError('Ошибка при регистрации');
+      setError('Ошибка при регистрации сотрудника');
     }
   };
 
@@ -82,7 +90,7 @@ const Register = () => {
       <Header />
       <div className="auth-container">
         <div className="auth-form-container">
-          <h2>Регистрация администратора</h2>
+          <h2>Регистрация сотрудника</h2>
           {error && <div className="error-message">{error}</div>}
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
@@ -133,12 +141,35 @@ const Register = () => {
                 placeholder="Подтвердите пароль"
               />
             </div>
-            <button type="submit" className="submit-btn">Зарегистрироваться</button>
+            <div className="form-group">
+              <label htmlFor="position">Должность</label>
+              <input
+                type="text"
+                id="position"
+                name="position"
+                value={formData.position}
+                onChange={handleChange}
+                required
+                placeholder="Введите должность"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="department">Отдел</label>
+              <input
+                type="text"
+                id="department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                required
+                placeholder="Введите отдел"
+              />
+            </div>
+            <button type="submit" className="submit-btn">Зарегистрировать сотрудника</button>
           </form>
           <div className="auth-links">
             <p>
-              Уже есть аккаунт?{' '}
-              <Link to="/login">Войти</Link>
+              <Link to="/employees">Вернуться к списку сотрудников</Link>
             </p>
           </div>
         </div>
@@ -148,4 +179,4 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default EmployeeRegister; 

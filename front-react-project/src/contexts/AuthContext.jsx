@@ -1,64 +1,64 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import authService from '../services/authService';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { authService } from '../services/authService';
 
 // Создаем контекст авторизации
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 // Хук для использования контекста авторизации
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
 // Провайдер контекста авторизации
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const verifyUserSession = async () => {
+    const initAuth = async () => {
       if (authService.isAuthenticated()) {
         try {
-          const updatedUser = await authService.fetchCurrentUser();
-          setCurrentUser(updatedUser);
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
         } catch (error) {
-          console.error('Error verifying user session:', error);
+          console.error('Error fetching user data:', error);
+          await authService.logout();
         }
       }
       setLoading(false);
     };
 
-    verifyUserSession();
+    initAuth();
   }, []);
 
-  const login = async (username, password) => {
-    const response = await authService.login(username, password);
-    setCurrentUser(authService.getCurrentUser());
+  const login = async (credentials) => {
+    const response = await authService.login(credentials);
+    setUser(response.user);
     return response;
   };
 
-  const logout = () => {
-    authService.logout();
-    setCurrentUser(null);
+  const logout = async () => {
+    await authService.logout();
+    setUser(null);
   };
 
   const register = async (userData) => {
     return authService.register(userData);
   };
 
-  const isAuthenticated = () => !!currentUser;
+  const isAuthenticated = () => !!user;
 
-  const value = {
-    currentUser,
-    loading,
-    login,
-    logout,
-    register,
-    isAuthenticated
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated }}>
+      {children}
     </AuthContext.Provider>
   );
 };

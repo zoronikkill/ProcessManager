@@ -12,10 +12,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import './App.css';
 
 // Компонент для защищенных маршрутов
-const PrivateRoute = ({ element }) => {
+const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  
-  return isAuthenticated() ? element : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 function AppRoutes() {
@@ -23,7 +22,6 @@ function AppRoutes() {
     <Router>
       {/* Обертка для flex layout */}
       <div className="app-container"> 
-        <Header />
         {/* Основной контент */}
         <main className="main-content"> 
           <Routes>
@@ -35,23 +33,26 @@ function AppRoutes() {
             {/* Защищенные маршруты */}
             <Route 
               path="/projects" 
-              element={<PrivateRoute element={<ProjectsPage />} />} 
+              element={
+                <PrivateRoute>
+                  <ProjectsPage />
+                </PrivateRoute>
+              } 
             />
             <Route 
               path="/editor/:projectId" 
-              element={<PrivateRoute element={<ProjectEditor />} />} 
+              element={<PrivateRoute><ProjectEditor /></PrivateRoute>} 
             />
             <Route 
               path="/editor" 
-              element={<PrivateRoute element={<ProjectEditor />} />} 
+              element={<PrivateRoute><ProjectEditor /></PrivateRoute>} 
             />
             <Route 
               path="/employees" 
-              element={<PrivateRoute element={<EmployeesPage />} />} 
+              element={<PrivateRoute><EmployeesPage /></PrivateRoute>} 
             />
           </Routes>
         </main>
-        <Footer />
       </div>
     </Router>
   );

@@ -4,7 +4,6 @@ footer {
     display: flex;
     justify-content: center;
     bottom: 0;
-    min-height: 40px; /* Добавляем минимальную высоту для пустого футера */
 }
   
 .footer-content {

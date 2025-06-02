@@ -1,387 +1,334 @@
 .project-constructor {
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* Растягиваем на всю высоту родителя (.project-editor-main) */
-    width: 100%;  /* Добавляем, чтобы занять всю доступную ширину */
-    padding: 20px;
-    gap: 20px;
-    box-sizing: border-box; /* Учитываем padding в размерах */
-}
-
-.project-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #E5E5E5;
-    margin-bottom: 10px;
-}
-
-.project-title-input {
-    flex: 1;
-    padding: 10px 12px;
-    font-size: 18px;
-    font-weight: 500;
-    border: 1px solid #E5E5E5;
-    border-radius: 6px;
-    color: #333;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.project-title-input:focus {
-    outline: none;
-    border-color: #5c2f91;
-    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.2);
-}
-
-.save-button {
-    margin-left: 16px;
-    padding: 10px 16px;
-    background-color: #5c2f91;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.save-button:hover {
-    background-color: #4a2578;
-}
-
-.project-content {
-    display: flex;
-    flex: 1;
-    gap: 24px;
-    overflow: hidden;
+  display: flex;
+  height: calc(100vh - 150px);
+  padding: 20px;
+  gap: 20px;
 }
 
 .tasks-panel {
-    width: 250px; /* Фиксированная ширина */
-    flex-shrink: 0; /* Запрещаем панели сжиматься */
-    padding: 15px;
-    background-color: white;
-    border: 1px solid #E5E5E5;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    max-height: calc(100vh - 200px); /* Ограничиваем высоту, чтобы не выходило за пределы экрана */
-}
-
-.tasks-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.tasks-panel-header h3 {
-    font-size: 18px;
-    color: #333;
-    margin: 0;
-    font-weight: 600;
-}
-
-/* Adjust styles for small buttons to make them more compact */
-.button.small { /* Assuming Button component renders <button class="button small ..."> */
-    padding: 4px 10px; /* Reduce vertical padding, adjust horizontal */
-    font-size: 13px;   /* Slightly smaller font */
-    min-width: auto;   /* Allow button to shrink */
-    line-height: 1.4;  /* Adjust line height for smaller padding */
-}
-
-/* Styles for the new task form */
-.task-form {
-    display: flex;
-    flex-direction: column; /* Stack input and buttons vertically */
-    gap: 8px; /* Space between input and buttons */
-    margin-top: 12px; /* Space above the form */
-    margin-bottom: 16px; /* Space below the form */
-    padding: 10px;
-    background-color: #f9f9f9; /* Light background for the form area */
-    border: 1px solid #eee;
-    border-radius: 6px;
-}
-
-.task-input {
-    padding: 8px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-    width: 100%; /* Make input take full width */
-    box-sizing: border-box; /* Include padding and border in width */
-}
-
-.form-buttons {
-    display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
-    gap: 8px; /* Space between buttons */
-}
-
-/* Optional: Adjust specific button styles if needed */
-.form-buttons .button.confirm-button {
-    background-color: #5c2f91;
-    color: white;
-}
-
-.form-buttons .button.cancel-button {
-    /* Specific styles for cancel button */
-    background-color: #eee;
-    color: #555;
-}
-.form-buttons .button.cancel-button:hover {
-    background-color: #ddd;
-}
-
-.tasks-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px; /* Increased gap for better spacing */
-    margin-top: 16px; /* Add margin above the list */
+  width: 250px;
+  padding: 15px;
+  background-color: #f0f0f0;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  pointer-events: auto;
 }
 
 .tasks-panel .task {
-    width: 200px; /* уменьшаем ширину с 280px */
-    margin: 0 auto; /* центрируем */
-    padding: 12px; /* немного уменьшаем отступы */
-    background-color: white;
-    border-radius: 8px;
-    border: 1px solid #E5E5E5;
-    cursor: grab;
-    transition: all 0.2s ease;
-    font-size: 14px;
-    color: #333;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: #e0e0e0;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  touch-action: none;
 }
 
 .tasks-panel .task:hover {
-    border-color: #5c2f91;
-    box-shadow: 0 4px 8px rgba(92, 47, 145, 0.1);
-    transform: translateY(-2px);
+  transform: translateX(5px);
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+  background-color: #d0d0d0;
+}
+
+.tasks-panel .task:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+  background-color: #c0c0c0;
+}
+
+.tasks-panel .task.dragging {
+  opacity: 0.8;
+  transform: scale(0.95);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  background-color: #b0b0b0;
+}
+
+.tasks-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 50px;
+  pointer-events: auto;
+}
+
+.project-area-container {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  min-height: 500px;
+}
+
+.project-area-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 0 10px;
+}
+
+.project-title-input {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.project-title {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 2px solid #5c2f91;
+  border-radius: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.project-title:focus {
+  outline: none;
+  border-color: #4a2475;
+  box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.2);
+}
+
+.project-title::placeholder {
+  color: #999;
+}
+
+.save-button {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button:hover {
+  background-color: #218838;
 }
 
 .project-area {
-    flex: 1; /* Занимает все оставшееся пространство */
-    position: relative;
-    background-color: white;
-    border: 1px solid #E5E5E5;
-    border-radius: 8px;
-    padding: 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    overflow: auto;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  transition: all 0.2s ease;
 }
 
-.area-title {
-    font-size: 18px;
-    color: #333;
-    margin: 0 0 24px 0;
-    font-weight: 600;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #E5E5E5;
+.project-area.active {
+  background-color: rgba(92, 47, 145, 0.05);
+  border: 2px dashed #5c2f91;
 }
 
-/* Стили для задач в рабочей области */
+.connections {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .task {
-    position: relative;
-    width: 280px;
-    background-color: white;
-    border: 1px solid #E5E5E5;
-    border-radius: 8px;
-    padding: 16px;
-    cursor: move;
-    z-index: 1;
-    user-select: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  width: 200px;
+  min-height: 80px;
+  background-color: white;
+  border: 1px solid #5c2f91;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: move;
+  z-index: 2;
+  user-select: none;
+  touch-action: none;
+  margin: 0 auto;
+  transition: left 0.2s ease, top 0.2s ease;
+  pointer-events: auto;
 }
 
 .task.selected {
-    border: 2px solid #5c2f91;
-    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.2);
+  z-index: 3;
+  box-shadow: 0 0 0 3px #5c2f91;
+}
+
+.task.dragging {
+  z-index: 4;
+  opacity: 0.9;
+}
+
+.task.over {
+  border: 2px dashed #5c2f91;
+  background-color: rgba(92, 47, 145, 0.05);
 }
 
 .task-header {
-    font-weight: 500;
-    margin-bottom: 12px;
-    color: #333;
-    font-size: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #E5E5E5;
-    cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #5c2f91;
+  cursor: move;
+  user-select: none;
 }
 
-.task-name-input {
-    width: 100%;
-    padding: 4px 8px;
-    font-size: 16px;
-    font-weight: 500;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    color: #333;
-    outline: none;
-    transition: border-color 0.2s;
-    margin: -5px 0;
-    box-sizing: border-box;
+.task-details {
+  font-size: 12px;
+  pointer-events: none;
 }
 
-.task-name-input:focus {
-    border-color: #5c2f91;
-    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.1);
+.task-details input,
+.task-details select {
+  pointer-events: auto;
 }
 
-.task-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.task-details label {
+  display: block;
+  margin-top: 5px;
+  color: #666;
 }
 
-.task-action {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #666;
-    font-size: 14px;
-    font-weight: 400;
-    cursor: pointer;
-    padding: 4px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: flex-start; /* выравнивание элементов слева */
+.task-details input {
+  width: 100%;
+  padding: 3px;
+  margin-top: 2px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
 }
 
-.action-text {
-    flex-grow: 1;
-    width: 150px; /* зафиксированная ширина для надписи */
+.task-form {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
 }
 
-.info-text {
-    width: 120px; /* зафиксированная ширина для информации */
-    text-align: center;
-    color: #777;
-    font-style: italic;
+.connections line {
+  transition: all 0.2s ease-out;
 }
 
-.action-icon {
-    width: 28px;
-    height: 28px;
-    aspect-ratio: 1; /* сохраняем квадратную форму */
-    background: #F0F0F0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    color: #666;
-    transition: all 0.2s ease;
-    margin-left: 8px; /* убран auto, чтобы избежать искажения */
+.task-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-.action-icon:hover {
-    background: #5c2f91;
-    color: white;
+.form-buttons {
+  display: flex;
+  gap: 10px;
 }
 
-.action-icon.calendar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
+.add-button {
+  background-color: #5c2f91;
+  color: white;
 }
 
-.action-icon.calendar img {
-    width: 16px;
-    height: 16px;
-    color: #666;
+.add-button:hover {
+  background-color: #4a2475;
 }
 
-.action-icon:hover img {
-    color: white;
-    filter: brightness(0) invert(1);
+.confirm-button {
+  background-color: #28a745;
+  color: white;
 }
 
-/* Connections */
-.connections {
-    pointer-events: none;
+.cancel-button {
+  background-color: #dc3545;
+  color: white;
 }
 
-/* Drag states */
-.task.dragging {
-    opacity: 0.9;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    cursor: grabbing;
-    z-index: 1000;
+.connection-label {
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
+  user-select: none;
+  background-color: white;
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
-.connection-mode .task {
-    cursor: pointer;
+.connection-label.positive-diff {
+  fill: #28a745;
 }
 
-.connection-mode .task:hover {
-    border-color: #5c2f91;
+.connection-label.negative-diff {
+  fill: #dc3545;
 }
 
-/* Стили для инлайн-редактирования */
-.inline-edit-input,
-.inline-edit-select {
-    width: 120px;
-    padding: 4px 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: white;
-    text-align: center;
-    color: #333;
-    outline: none;
-    transition: border-color 0.2s;
+.connection-label.zero-diff {
+  fill: #5c2f91;
 }
 
-.inline-edit-input:focus,
-.inline-edit-select:focus {
-    border-color: #5c2f91;
-    box-shadow: 0 0 0 2px rgba(92, 47, 145, 0.1);
+.connection-line {
+  stroke: #5c2f91;
+  stroke-width: 2;
+  marker-end: url(#arrowhead);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  pointer-events: all;
 }
 
-.inline-edit-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23666' d='M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414z'/%3E%3C/svg%3E");
-    background-position: right 5px center;
-    background-repeat: no-repeat;
-    background-size: 16px;
-    padding-right: 25px;
+.connection-line.selected {
+  stroke: #dc3545;
+  stroke-width: 3;
 }
 
-.loading-message {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
-    font-size: 18px;
-    color: #666;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    margin: 20px 0;
+.delete-connection-btn {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.error-message {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
-    font-size: 18px;
-    color: #d32f2f;
-    background-color: #ffebee;
-    border-radius: 8px;
-    margin: 20px 0;
-    padding: 20px;
-    text-align: center;
+.delete-connection-btn:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
-.save-button.saving {
-    background-color: #9c79cc;
-    cursor: not-allowed;
+.delete-connection-btn:active {
+  transform: scale(0.95);
+}
+
+.project-area[data-droppable="true"] {
+  position: relative;
+}
+
+.project-area[data-droppable="true"].active {
+  background-color: rgba(92, 47, 145, 0.1);
+  border: 2px dashed #5c2f91;
+}
+
+.delete-connection-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background-color: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-connection-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.delete-connection-btn:hover {
+  background-color: #c82333;
 }

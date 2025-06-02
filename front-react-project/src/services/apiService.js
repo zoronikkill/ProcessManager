@@ -15,6 +15,9 @@ class ApiService {
     this.tokenKey = 'process_manager_token';
     this.refreshTokenKey = 'process_manager_refresh_token';
     this.refreshPromise = null;
+    
+    // Инициализируем токены при создании экземпляра
+    this.initTokens();
   }
 
   /**
@@ -30,6 +33,28 @@ class ApiService {
 
     if (refreshToken) {
       this.refreshToken = refreshToken;
+    }
+
+    // Если есть токены, проверяем их валидность
+    if (this.accessToken || this.refreshToken) {
+      this.validateTokens();
+    }
+  }
+
+  /**
+   * Проверяет валидность токенов
+   */
+  async validateTokens() {
+    try {
+      await this.get('/api/auth/verify/');
+    } catch (error) {
+      if (error.status === 401 && this.refreshToken) {
+        // Пробуем обновить токен
+        await this.refreshAccessToken();
+      } else {
+        // Если не удалось обновить, очищаем токены
+        this.clearTokens();
+      }
     }
   }
 
@@ -319,6 +344,22 @@ class ApiService {
   handleError(error) {
     console.error('API Error:', error);
     throw error;
+  }
+
+  /**
+   * Проверяет, аутентифицирован ли пользователь
+   * @returns {boolean} - true, если у пользователя есть действующий токен
+   */
+  isAuthenticated() {
+    return !!this.accessToken;
+  }
+
+  /**
+   * Получает текущий токен доступа
+   * @returns {string|null} - Токен доступа или null
+   */
+  getToken() {
+    return this.accessToken;
   }
 }
 

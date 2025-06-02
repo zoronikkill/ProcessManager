@@ -1,47 +1,54 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext.jsx';
 import './Header.css';
+import Button from '../Button/Button';
+import { authService } from '../../services/authService';
 
 function Header() {
-  const { currentUser, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const currentUser = authService.getCurrentUser();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await authService.logout();
     navigate('/login');
   };
 
+  const handleAddEmployee = () => {
+    navigate('/register-employee');
+  };
+
   return (
-    <header>
-      <div className="nav">
-        <Link to="/" className="title">Конструктор проектов</Link>
-        {isAuthenticated() && (
-          <>
-            <Link to="/projects" className="nav-link">Проекты</Link>
-            <Link to="/employees" className="nav-link">Сотрудники</Link>
-          </>
-        )}
-      </div>
-      <div className="profile-area">
-        {isAuthenticated() ? (
-          <>
-            <div className="user-info">
-              <span>{currentUser?.name || currentUser?.username}</span>
-            </div>
-            <div className="profile-icon">
-              <img src="/profile-icon.png" alt="Profile" />
-              <div className="dropdown-menu">
-                <button onClick={handleLogout} className="logout-btn">Выйти</button>
+    <header className="header">
+      <div className="header-content">
+        <div className="logo">
+          <Link to="/">Менеджер проектов</Link>
+        </div>
+        <nav className="nav-links">
+          {currentUser ? (
+            <>
+              <Link to="/projects">Проекты</Link>
+              {currentUser.role === 'admin' && (
+                <>
+                  <Link to="/employees">Сотрудники</Link>
+                  <Button 
+                    text="Добавить сотрудника" 
+                    className="small secondary" 
+                    onClick={handleAddEmployee}
+                  />
+                </>
+              )}
+              <div className="user-info">
+                <span>{currentUser.username}</span>
+                <Button text="Выйти" className="small secondary" onClick={handleLogout} />
               </div>
-            </div>
-          </>
-        ) : (
-          <div className="auth-links">
-            <Link to="/login" className="auth-link">Войти</Link>
-            <Link to="/register" className="auth-link">Регистрация</Link>
-          </div>
-        )}
+            </>
+          ) : (
+            <>
+              <Link to="/login">Войти</Link>
+              <Link to="/register">Регистрация</Link>
+            </>
+          )}
+        </nav>
       </div>
     </header>
   );
