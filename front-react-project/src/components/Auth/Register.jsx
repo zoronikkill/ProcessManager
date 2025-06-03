@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import './Auth.css';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -66,8 +68,17 @@ const Register = () => {
 
       console.log('Отправка данных для регистрации:', registrationData);
       
-      await authService.register(registrationData);
-      navigate('/login');
+      const response = await authService.register(registrationData);
+      
+      // После успешной регистрации автоматически входим в систему
+      if (response && response.id) {
+        // Обновляем контекст аутентификации с данными пользователя
+        await login({ user: response });
+        navigate('/projects');
+      } else {
+        // Если автоматический вход не удался, перенаправляем на страницу входа
+        navigate('/login');
+      }
     } catch (err) {
       console.error('Ошибка при регистрации:', err);
       

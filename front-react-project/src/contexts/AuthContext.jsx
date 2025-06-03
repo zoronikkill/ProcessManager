@@ -20,14 +20,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          const userData = await authService.getCurrentUser();
+      try {
+        const userData = await authService.getCurrentUser();
+        if (userData) {
           setUser(userData);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          await authService.logout();
         }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
       setLoading(false);
     };
@@ -38,19 +37,20 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       console.log('AuthContext: попытка входа');
+      
+      // Если переданы готовые данные пользователя (после регистрации)
+      if (credentials.user && credentials.user.id) {
+        console.log('AuthContext: установка данных пользователя после регистрации');
+        setUser(credentials.user);
+        return credentials.user;
+      }
+      
+      // Обычный вход с логином и паролем
       const response = await authService.login(credentials);
       console.log('AuthContext: успешный вход, ответ:', response);
       
-      // Проверяем, есть ли данные пользователя в ответе
-      if (response.user) {
-        setUser(response.user);
-      } else {
-        // Если данных пользователя нет в ответе, запрашиваем их отдельно
-        console.log('AuthContext: запрос данных пользователя');
-        const userData = await authService.getCurrentUser();
-        console.log('AuthContext: получены данные пользователя:', userData);
-        setUser(userData);
-      }
+      // Устанавливаем данные пользователя
+      setUser(response);
       
       return response;
     } catch (error) {

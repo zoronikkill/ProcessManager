@@ -85,21 +85,34 @@ class ApiService {
    * Обрабатывает ответ от сервера
    */
   async handleResponse(response) {
+    const contentType = response.headers.get('content-type');
+    
     if (!response.ok) {
       const error = new Error('HTTP error');
       error.status = response.status;
+      
       try {
-        error.data = await response.json();
+        if (contentType && contentType.includes('application/json')) {
+          error.data = await response.json();
+        } else {
+          error.data = await response.text();
+        }
       } catch {
-        error.data = await response.text();
+        error.data = 'Failed to parse error response';
       }
+      
       throw error;
     }
 
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
+    // Обработка успешного ответа
+    if (!contentType) {
+      return null;
+    }
+    
+    if (contentType.includes('application/json')) {
       return response.json();
     }
+    
     return response.text();
   }
 

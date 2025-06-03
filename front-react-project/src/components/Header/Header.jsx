@@ -10,13 +10,9 @@ function Header() {
 
   const fetchUser = async () => {
     try {
-      if (authService.isAuthenticated()) {
-        const user = await authService.getCurrentUser();
-        console.log('Данные пользователя в Header:', user);
-        setCurrentUser(user);
-      } else {
-        setCurrentUser(null);
-      }
+      const user = await authService.getCurrentUser();
+      console.log('Данные пользователя в Header:', user);
+      setCurrentUser(user);
     } catch (error) {
       console.error('Ошибка при получении данных пользователя:', error);
       setCurrentUser(null);
@@ -27,11 +23,8 @@ function Header() {
     fetchUser();
   }, []);
 
-  // Добавляем интервал для периодической проверки статуса авторизации
-  useEffect(() => {
-    const interval = setInterval(fetchUser, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // Убираем интервал обновления, чтобы не спамить сервер
+  // Вместо этого будем обновлять данные при навигации
 
   const handleLogout = async () => {
     try {

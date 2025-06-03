@@ -9,10 +9,21 @@ const authService = {
    */
   async getCurrentUser() {
     try {
+      console.log('authService: запрос данных текущего пользователя');
       const response = await apiService.get('/api/auth/user/');
+      console.log('authService: получены данные пользователя:', response);
+      // Если сервер вернул null, значит пользователь не аутентифицирован
+      if (response === null) {
+        return null;
+      }
       return response;
     } catch (error) {
       console.error('Error fetching current user:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        data: error.data
+      });
       return null;
     }
   },
@@ -69,7 +80,7 @@ const authService = {
   async register(userData) {
     try {
       // Получаем CSRF-токен перед регистрацией
-      await apiService.get('/api/auth/user/');
+      await apiService.get('/api/auth/csrf/');
       
       const response = await apiService.post('/api/auth/register/', userData);
       return response;
