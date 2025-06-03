@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { projectService } from "../services/projectService";
+import projectService from "../services/projectService";
+import Header from "../components/Header/Header";
+import Footer from "../components/Footer/Footer";
 import "./ProjectsPage.css";
 
 const ProjectsPage = () => {
@@ -44,42 +46,28 @@ const ProjectsPage = () => {
   };
 
   // Фильтрация проектов по поисковому запросу
-  const filteredProjects = projects.filter(project =>
-    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = Array.isArray(projects) 
+    ? projects.filter(project => 
+        project?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   // Функция создания нового проекта и перехода в редактор
-  const createNewProject = async () => {
-    const projectName = prompt("Введите название нового проекта:");
-    if (projectName) {
-      try {
-        const newProject = await projectService.create({
-          title: projectName,
-          description: "",
-          status: "draft",
-          data: {
-            tasks: [],
-            connections: [],
-            settings: {}
-          }
-        });
-        
-        setProjects([...projects, newProject]);
-        navigate(`/editor/${newProject.id}`);
-      } catch (err) {
-        console.error("Ошибка при создании проекта:", err);
-        setError("Не удалось создать проект. Пожалуйста, попробуйте позже.");
-      }
-    }
+  const createNewProject = () => {
+    navigate('/editor');
   };
 
   if (loading) {
     return <div className="loading">Загрузка проектов...</div>;
   }
 
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
   return (
     <div className="container">
+      <Header />
       <div className="projects-page">
         <div className="projects-header">
           <h1>Мои проекты</h1>
@@ -89,35 +77,39 @@ const ProjectsPage = () => {
               placeholder="Поиск по названию..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-project-input"
+              className="search-input"
             />
+            <Link to="/employees" className="employees-btn">
+              Сотрудники
+            </Link>
             <button 
               onClick={createNewProject}
-              className="create-project-btn"
+              className="button"
             >
-              + Создать проект
+              + Новый проект
             </button>
           </div>
         </div>
-
-        {error && <div className="error-message">{error}</div>}
 
         <div className="projects-grid">
           {filteredProjects.length > 0 ? (
             filteredProjects.map((project) => (
               <div key={project.id} className="project-card">
                 <h3>{project.title}</h3>
-                <p>{project.description}</p>
-                <div className="project-info">
-                  <span className="status">Статус: {project.status}</span>
-                  <span className="deadline">Дедлайн: {new Date(project.endDate).toLocaleDateString()}</span>
+                <div className="project-meta">
+                  <span>
+                    Создан: {new Date(project.created_at).toLocaleDateString()}
+                  </span>
+                  <span>
+                    Изменен: {new Date(project.updated_at).toLocaleDateString()}
+                  </span>
                 </div>
                 <div className="project-actions">
-                  <Link to={`/projects/${project.id}`} className="edit-button">
-                    Редактировать
+                  <Link to={`/projects/${project.id}`} className="button">
+                    Открыть
                   </Link>
                   <button 
-                    className="delete-button"
+                    className="button danger"
                     onClick={() => handleDelete(project.id)}
                   >
                     Удалить
@@ -129,12 +121,13 @@ const ProjectsPage = () => {
             <div className="no-projects">
               {searchQuery 
                 ? "Нет проектов, соответствующих поисковому запросу" 
-                : "У вас ещё нет проектов. Нажмите «Создать проект», чтобы начать."
+                : "У вас ещё нет проектов. Нажмите «Новый проект», чтобы начать."
               }
             </div>
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

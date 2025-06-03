@@ -3,14 +3,13 @@ import apiService from './apiService';
 /**
  * Сервис аутентификации и авторизации
  */
-export const authService = {
+const authService = {
   /**
-   * Получает текущего пользователя из localStorage
-   * @returns {Object|null} - Данные пользователя или null
+   * Получает данные текущего пользователя
    */
-  getCurrentUser: async () => {
+  async getCurrentUser() {
     try {
-      const response = await apiService.get('/api/auth/me/');
+      const response = await apiService.get('/api/auth/user/');
       return response;
     } catch (error) {
       console.error('Error fetching current user:', error);
@@ -27,59 +26,58 @@ export const authService = {
   },
 
   /**
-   * Проверяет, залогинен ли пользователь
-   * @returns {boolean} - true, если пользователь залогинен
+   * Проверяет, аутентифицирован ли пользователь
    */
-  isAuthenticated: () => {
-    return apiService.isAuthenticated();
+  async isAuthenticated() {
+    try {
+      const user = await this.getCurrentUser();
+      return !!user;
+    } catch {
+      return false;
+    }
   },
 
   /**
-   * Авторизация пользователя
-   * @param {Object} credentials - Учетные данные пользователя
-   * @returns {Promise<Object>} - Информация о пользователе и токены
+   * Выполняет вход пользователя
    */
-  login: async (credentials) => {
+  async login(username, password) {
     try {
-      const response = await apiService.post('/api/auth/login/', credentials);
-      
-      // Проверяем различные форматы ответа
-      if (response.access) {
-        apiService.setAuthToken(response.access);
-        if (response.refresh) {
-          apiService.setRefreshToken(response.refresh);
-        }
-        return response;
-      } else if (response.token) {
-        apiService.setAuthToken(response.token);
-        return response;
-      }
-      
-      throw new Error('Invalid token format in response');
+      const response = await apiService.post('/api/auth/login/', { username, password });
+      return response;
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('Ошибка при входе:', error);
       throw error;
     }
   },
 
   /**
-   * Выход из системы
+   * Выполняет выход пользователя
    */
-  logout: async () => {
+  async logout() {
     try {
       await apiService.post('/api/auth/logout/');
-    } finally {
-      apiService.clearToken();
+      return true;
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+      return false;
     }
   },
 
   /**
-   * Регистрация нового пользователя
-   * @param {Object} userData - Данные пользователя
-   * @returns {Promise<Object>} - Созданный пользователь
+   * Регистрирует нового пользователя
    */
-  register: async (userData) => {
-    return apiService.post('/api/auth/register/', userData);
+  async register(userData) {
+    try {
+      // Получаем CSRF-токен перед регистрацией
+      await apiService.get('/api/auth/user/');
+      
+      const response = await apiService.post('/api/auth/register/', userData);
+      return response;
+    } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      console.error('Детали ошибки:', error.data);
+      throw error;
+    }
   },
 
   /**
@@ -104,5 +102,51 @@ export const authService = {
       token,
       new_password: newPassword
     });
+  },
+
+  /**
+   * Получает список всех пользователей
+   * @returns {Promise<Array>} - Список пользователей
+   */
+  getUsers: async () => {
+    try {
+      console.log('Запрос списка пользователей...');
+      const response = await apiService.get('/api/users/');
+      console.log('Получен список пользователей:', response);
+      
+      // Проверяем, что ответ содержит поле results с массивом пользователей
+      if (response && response.results && Array.isArray(response.results)) {
+        return response.results;
+      } else {
+        console.error('Некорректный формат данных:', response);
+        throw new Error('Получены некорректные данные от сервера');
+      }
+    } catch (error) {
+      console.error('Ошибка при получении списка пользователей:', error);
+      if (error.response) {
+        console.error('Детали ошибки:', error.response.data);
+        throw new Error(error.response.data.detail || 'Ошибка при получении списка пользователей');
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Удаляет пользователя
+   * @param {string|number} userId - Идентификатор пользователя
+   * @returns {Promise<{success: boolean}>} - Результат операции
+   */
+  deleteUser: async (userId) => {
+    try {
+      console.log('Попытка удаления пользователя:', userId);
+      const response = await apiService.delete(`/api/users/${userId}/`);
+      console.log('Пользователь успешно удален');
+      return response;
+    } catch (error) {
+      console.error('Ошибка при удалении пользователя:', error);
+      throw error;
+    }
   }
 };
+
+export default authService;

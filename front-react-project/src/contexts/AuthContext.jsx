@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authService } from '../services/authService';
+import authService from '../services/authService';
 
 // Создаем контекст авторизации
 const AuthContext = createContext(null);
@@ -36,9 +36,27 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    const response = await authService.login(credentials);
-    setUser(response.user);
-    return response;
+    try {
+      console.log('AuthContext: попытка входа');
+      const response = await authService.login(credentials);
+      console.log('AuthContext: успешный вход, ответ:', response);
+      
+      // Проверяем, есть ли данные пользователя в ответе
+      if (response.user) {
+        setUser(response.user);
+      } else {
+        // Если данных пользователя нет в ответе, запрашиваем их отдельно
+        console.log('AuthContext: запрос данных пользователя');
+        const userData = await authService.getCurrentUser();
+        console.log('AuthContext: получены данные пользователя:', userData);
+        setUser(userData);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('AuthContext: ошибка при входе:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {

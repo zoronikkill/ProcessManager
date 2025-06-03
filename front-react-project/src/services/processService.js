@@ -8,63 +8,83 @@ class ProcessService {
    * Базовый эндпоинт для API бизнес-процессов
    */
   constructor() {
-    this.endpoint = '/processes';
+    this.endpoint = '/api/processes';
   }
 
   /**
-   * Получает список всех активных бизнес-процессов
+   * Получает список всех процессов
    * @param {Object} params - Параметры запроса для фильтрации
    * @returns {Promise<Array>} - Массив бизнес-процессов
    */
   async getAll(params = {}) {
-    return apiService.get(this.endpoint, params);
+    try {
+      const response = await apiService.get(this.endpoint, params);
+      return Array.isArray(response) ? response : response.results || [];
+    } catch (error) {
+      console.error('Error fetching processes:', error);
+      return [];
+    }
   }
 
   /**
-   * Получает данные конкретного бизнес-процесса
+   * Получает данные конкретного процесса
    * @param {string|number} id - Идентификатор бизнес-процесса
    * @returns {Promise<Object>} - Данные бизнес-процесса
    */
   async getById(id) {
-    return apiService.get(`${this.endpoint}/${id}`);
+    try {
+      const response = await apiService.get(`${this.endpoint}/${id}/`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching process:', error);
+      throw error;
+    }
   }
 
   /**
-   * Создает новый бизнес-процесс 
+   * Создает новый процесс
    * @param {Object} processData - Данные для создания бизнес-процесса
    * @returns {Promise<Object>} - Созданный бизнес-процесс
    */
-  async create(processData) {
-    return apiService.post(this.endpoint, processData);
+  async createProcess(processData) {
+    try {
+      const response = await apiService.post(this.endpoint, processData);
+      return response;
+    } catch (error) {
+      console.error('Error creating process:', error);
+      throw error;
+    }
   }
 
   /**
-   * Обновляет данные бизнес-процесса
+   * Обновляет данные процесса
    * @param {string|number} id - Идентификатор бизнес-процесса
    * @param {Object} processData - Обновленные данные бизнес-процесса
    * @returns {Promise<Object>} - Обновленный бизнес-процесс
    */
-  async update(id, processData) {
-    return apiService.put(`${this.endpoint}/${id}`, processData);
+  async updateProcess(id, processData) {
+    try {
+      const response = await apiService.put(`${this.endpoint}/${id}/`, processData);
+      return response;
+    } catch (error) {
+      console.error('Error updating process:', error);
+      throw error;
+    }
   }
 
   /**
-   * Частично обновляет данные бизнес-процесса
-   * @param {string|number} id - Идентификатор бизнес-процесса
-   * @param {Object} processData - Частичные данные для обновления
-   * @returns {Promise<Object>} - Обновленный бизнес-процесс
-   */
-  async partialUpdate(id, processData) {
-    return apiService.patch(`${this.endpoint}/${id}`, processData);
-  }
-
-  /**
-   * Удаляет бизнес-процесс
+   * Удаляет процесс
    * @param {string|number} id - Идентификатор бизнес-процесса
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  async delete(id) {
-    return apiService.delete(`${this.endpoint}/${id}`);
+  async deleteProcess(id) {
+    try {
+      await apiService.delete(`${this.endpoint}/${id}/`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting process:', error);
+      throw error;
+    }
   }
 
   /**
@@ -77,22 +97,50 @@ class ProcessService {
   }
 
   /**
-   * Получает задачи бизнес-процесса
-   * @param {string|number} id - Идентификатор бизнес-процесса
+   * Получает задачи процесса
+   * @param {string|number} processId - Идентификатор бизнес-процесса
    * @returns {Promise<Array>} - Массив задач бизнес-процесса
    */
-  async getTasks(id) {
-    return apiService.get(`${this.endpoint}/${id}/tasks`);
+  async getProcessTasks(processId) {
+    try {
+      const response = await apiService.get(`${this.endpoint}/${processId}/tasks/`);
+      return Array.isArray(response) ? response : response.results || [];
+    } catch (error) {
+      console.error('Error fetching process tasks:', error);
+      return [];
+    }
   }
 
   /**
-   * Обновляет статус бизнес-процесса
-   * @param {string|number} id - Идентификатор бизнес-процесса
+   * Создает новую задачу в процессе
+   * @param {string|number} processId - Идентификатор бизнес-процесса
+   * @param {Object} taskData - Данные для создания задачи
+   * @returns {Promise<Object>} - Созданная задача
+   */
+  async createProcessTask(processId, taskData) {
+    try {
+      const response = await apiService.post(`${this.endpoint}/${processId}/tasks/`, taskData);
+      return response;
+    } catch (error) {
+      console.error('Error creating process task:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Обновляет статус процесса
+   * @param {string|number} processId - Идентификатор бизнес-процесса
    * @param {string} status - Новый статус бизнес-процесса
    * @returns {Promise<Object>} - Обновленный бизнес-процесс
    */
-  async updateStatus(id, status) {
-    return apiService.patch(`${this.endpoint}/${id}/status`, { status });
+  async updateStatus(processId, status) {
+    try {
+      const response = await apiService.patch(`${this.endpoint}/${processId}/status/`, { status });
+      return response;
+    } catch (error) {
+      console.error('Error updating process status:', error);
+      throw error;
+    }
   }
 
   /**

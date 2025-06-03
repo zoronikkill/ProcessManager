@@ -3,16 +3,16 @@ import apiService from './apiService';
 /**
  * Сервис для управления данными сотрудников
  */
-export const employeeService = {
+const employeeService = {
   /**
    * Получает список всех сотрудников
    * @param {Object} params - Параметры запроса для фильтрации (отдел, должность и т.д.)
    * @returns {Promise<Array>} - Массив сотрудников
    */
-  getAll: async (params = {}) => {
+  async getAll(params = {}) {
     try {
-      const response = await apiService.get('/employees', params);
-      return response.data;
+      const response = await apiService.get('/api/employees/', params);
+      return Array.isArray(response) ? response : response.results || [];
     } catch (error) {
       console.error('Error fetching employees:', error);
       return [];
@@ -24,13 +24,13 @@ export const employeeService = {
    * @param {string|number} id - Идентификатор сотрудника
    * @returns {Promise<Object>} - Данные сотрудника
    */
-  getById: async (id) => {
+  async getById(id) {
     try {
-      const response = await apiService.get(`/employees/${id}`);
-      return response.data;
+      const response = await apiService.get(`/api/employees/${id}/`);
+      return response;
     } catch (error) {
       console.error('Error fetching employee:', error);
-      return null;
+      throw error;
     }
   },
 
@@ -39,14 +39,19 @@ export const employeeService = {
    * @param {Object} employeeData - Данные нового сотрудника
    * @returns {Promise<Object>} - Созданный сотрудник
    */
-  create: async (employeeData) => {
+  async create(employeeData) {
     try {
-      const response = await apiService.post('/employees', employeeData);
-      return response.data;
+      const response = await apiService.post('/api/employees/', employeeData);
+      return response;
     } catch (error) {
       console.error('Error creating employee:', error);
       throw error;
     }
+  },
+
+  // Алиас для обратной совместимости
+  createEmployee: function(employeeData) {
+    return this.create(employeeData);
   },
 
   /**
@@ -55,14 +60,19 @@ export const employeeService = {
    * @param {Object} employeeData - Обновленные данные сотрудника
    * @returns {Promise<Object>} - Обновленный сотрудник
    */
-  update: async (id, employeeData) => {
+  async update(id, employeeData) {
     try {
-      const response = await apiService.put(`/employees/${id}`, employeeData);
-      return response.data;
+      const response = await apiService.put(`/api/employees/${id}/`, employeeData);
+      return response;
     } catch (error) {
       console.error('Error updating employee:', error);
-      return null;
+      throw error;
     }
+  },
+
+  // Алиас для обратной совместимости
+  updateEmployee: function(id, employeeData) {
+    return this.update(id, employeeData);
   },
 
   /**
@@ -72,7 +82,7 @@ export const employeeService = {
    * @returns {Promise<Object>} - Обновленный сотрудник
    */
   partialUpdate: async (id, employeeData) => {
-    return apiService.patch(`/employees/${id}`, employeeData);
+    return apiService.patch(`/api/employees/${id}/`, employeeData);
   },
 
   /**
@@ -80,21 +90,69 @@ export const employeeService = {
    * @param {string|number} id - Идентификатор сотрудника
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  delete: async (id) => {
+  async delete(id) {
     try {
-      await apiService.delete(`/employees/${id}`);
+      await apiService.delete(`/api/employees/${id}/`);
+      return true;
     } catch (error) {
       console.error('Error deleting employee:', error);
       throw error;
     }
   },
 
+  // Алиас для обратной совместимости
+  deleteEmployee: function(id) {
+    return this.delete(id);
+  },
+
   /**
    * Получает задачи, назначенные сотруднику
-   * @param {string|number} id - Идентификатор сотрудника
+   * @param {string|number} employeeId - Идентификатор сотрудника
    * @returns {Promise<Array>} - Массив задач
    */
-  getTasks: async (id) => {
-    return apiService.get(`/employees/${id}/tasks`);
+  async getTasks(employeeId) {
+    try {
+      const response = await apiService.get(`/api/employees/${employeeId}/tasks/`);
+      return Array.isArray(response) ? response : response.results || [];
+    } catch (error) {
+      console.error('Error fetching employee tasks:', error);
+      return [];
+    }
+  },
+
+  // Алиас для обратной совместимости
+  getEmployeeTasks: function(employeeId) {
+    return this.getTasks(employeeId);
+  },
+
+  /**
+   * Получает список всех отделов
+   * @returns {Promise<Array>} - Массив отделов
+   */
+  async getDepartments() {
+    try {
+      const response = await apiService.get('/api/departments/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Создает новый отдел
+   * @param {Object} departmentData - Данные нового отдела
+   * @returns {Promise<Object>} - Созданный отдел
+   */
+  async createDepartment(departmentData) {
+    try {
+      const response = await apiService.post('/api/departments/', departmentData);
+      return response;
+    } catch (error) {
+      console.error('Error creating department:', error);
+      throw error;
+    }
   }
 };
+
+export default employeeService;

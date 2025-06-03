@@ -5,7 +5,7 @@ const ItemTypes = {
   TASK: 'task'
 };
 
-function ProjectAreaTask({ task, onSelect, onUpdate, employees, isSelected }) {
+function ProjectAreaTask({ task, onSelect, onUpdate, employees = [], isSelected }) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.TASK,
     item: { type: 'project-task', task },
@@ -13,6 +13,9 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees, isSelected }) {
       isDragging: !!monitor.isDragging(),
     }),
   }));
+
+  // Убеждаемся, что employees является массивом
+  const employeesList = Array.isArray(employees) ? employees : [];
 
   return (
     <div
@@ -59,9 +62,9 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees, isSelected }) {
             onChange={(e) => onUpdate(task.id, "assignee", e.target.value)}
           >
             <option value="">Не назначено</option>
-            {employees.map((emp) => (
+            {employeesList.map((emp) => (
               <option key={emp.id} value={emp.id}>
-                {emp.username} ({emp.position || "Сотрудник"})
+                {emp.name || emp.username || 'Неизвестный сотрудник'} ({emp.position || "Сотрудник"})
               </option>
             ))}
           </select>

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-your-secret-key-here'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
@@ -47,7 +47,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -134,13 +134,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework настройки
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',  # Изменено с AllowAny на IsAuthenticated
-    ],
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT авторизация
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -151,39 +149,35 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20
 }
 
-# JWT настройки
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Время жизни access токена
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Время жизни refresh токена
-    'ROTATE_REFRESH_TOKENS': True,  # Генерировать новый refresh токен при использовании старого
-    'BLACKLIST_AFTER_ROTATION': False,  # Не добавлять старые токены в чёрный список
-    'UPDATE_LAST_LOGIN': True,  # Обновлять поле last_login пользователя
+# Настройки сессий
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 недели
+SESSION_COOKIE_SECURE = False  # В продакшене должно быть True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_NAME = 'sessionid'
 
-    'ALGORITHM': 'HS256',  # Алгоритм шифрования
-    'SIGNING_KEY': SECRET_KEY,  # Ключ для подписи
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-
-    'AUTH_HEADER_TYPES': ('Bearer',),  # Тип заголовка авторизации
-    'USER_ID_FIELD': 'id',  # Поле для идентификации пользователя
-    'USER_ID_CLAIM': 'user_id',  # Имя claim для ID пользователя
-
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-}
-
-# CORS настройки - разрешаем запросы с React-фронтенда
-CORS_ALLOW_ALL_ORIGINS = True  # Только для разработки!
-
-# Для продакшена используйте более строгую настройку:
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:5173",  # Vite React по умолчанию
-#     "http://127.0.0.1:5173",
-# ]
-
-# Разрешаем куки в CORS запросах
+# CORS настройки
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
+
+# CSRF настройки
+CSRF_COOKIE_NAME = "csrftoken"
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False  # В продакшене должно быть True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
+]
 
 # Настройки логирования
 LOGGING = {

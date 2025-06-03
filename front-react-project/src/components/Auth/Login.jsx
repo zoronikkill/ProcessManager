@@ -9,7 +9,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -29,10 +29,33 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log('Отправка формы входа:', formData);
       await login(formData);
       navigate('/projects');
     } catch (err) {
-      setError(err.message || 'Ошибка при входе в систему');
+      console.error('Ошибка при входе:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.response?.data) {
+        // Если ошибка содержит объект с полями валидации
+        const errorMessages = Object.entries(err.response?.data || {})
+          .map(([field, errors]) => {
+            if (Array.isArray(errors)) {
+              return `${field}: ${errors.join(', ')}`;
+            } else if (typeof errors === 'string') {
+              return `${field}: ${errors}`;
+            }
+            return `${field}: Неверное значение`;
+          })
+          .join('\n');
+        setError(errorMessages || 'Ошибка при входе в систему');
+      } else {
+        setError('Ошибка при входе в систему. Пожалуйста, проверьте введенные данные.');
+      }
     } finally {
       setLoading(false);
     }
@@ -46,14 +69,15 @@ const Login = () => {
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="email">Email:</label>
+            <label htmlFor="username">Имя пользователя:</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
+              placeholder="Введите имя пользователя"
             />
           </div>
           <div className="form-group">
@@ -65,6 +89,7 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              placeholder="Введите пароль"
             />
           </div>
           <button type="submit" className="auth-button" disabled={loading}>

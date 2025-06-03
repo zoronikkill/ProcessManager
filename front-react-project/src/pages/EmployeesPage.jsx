@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { employeeService } from '../services/employeeService';
+import employeeService from '../services/employeeService';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import './EmployeesPage.css';
@@ -18,11 +18,11 @@ const EmployeesPage = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const data = await employeeService.getAll();
-      setEmployees(data);
+      const response = await employeeService.getAll();
+      setEmployees(Array.isArray(response) ? response : []);
       setError(null);
     } catch (err) {
-      console.error('Error fetching employees:', err);
+      console.error('Ошибка при загрузке сотрудников:', err);
       setError('Не удалось загрузить список сотрудников');
     } finally {
       setLoading(false);
@@ -35,17 +35,17 @@ const EmployeesPage = () => {
         await employeeService.delete(id);
         setEmployees(employees.filter(emp => emp.id !== id));
       } catch (err) {
-        console.error('Error deleting employee:', err);
+        console.error('Ошибка при удалении сотрудника:', err);
         setError('Не удалось удалить сотрудника');
       }
     }
   };
 
   const filteredEmployees = employees.filter(emp =>
-    emp.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.department?.toLowerCase().includes(searchTerm.toLowerCase())
+    (emp.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (emp.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (emp.position?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (emp.department_name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -84,13 +84,13 @@ const EmployeesPage = () => {
           {filteredEmployees.map(employee => (
             <div key={employee.id} className="employee-card">
               <div className="employee-info">
-                <h3>{employee.username}</h3>
+                <h3>{employee.name}</h3>
                 <p className="email">{employee.email}</p>
                 {employee.position && (
                   <p className="position">Должность: {employee.position}</p>
                 )}
-                {employee.department && (
-                  <p className="department">Отдел: {employee.department}</p>
+                {employee.department_name && (
+                  <p className="department">Отдел: {employee.department_name}</p>
                 )}
                 <p className="date">
                   Дата регистрации: {new Date(employee.created_at).toLocaleDateString()}

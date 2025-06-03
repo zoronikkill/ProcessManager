@@ -22,12 +22,18 @@ class Department(models.Model):
 
 class Employee(models.Model):
     """Модель для сотрудников компании"""
+    ROLE_CHOICES = [
+        ('admin', 'Администратор'),
+        ('employee', 'Сотрудник'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile', null=True, blank=True)
     name = models.CharField(max_length=100, verbose_name="ФИО")
     position = models.CharField(max_length=100, verbose_name="Должность")
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees', verbose_name="Отдел")
     email = models.EmailField(verbose_name="Email")
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Телефон")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee', verbose_name="Роль")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
     
@@ -198,5 +204,39 @@ class Notification(models.Model):
         verbose_name_plural = "Уведомления"
         ordering = ['-created_at']
         
+    def __str__(self):
+        return self.title
+
+class Project(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Активный'),
+        ('completed', 'Завершен'),
+        ('suspended', 'Приостановлен'),
+        ('cancelled', 'Отменен'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', 'Низкий'),
+        ('medium', 'Средний'),
+        ('high', 'Высокий'),
+    ]
+
+    title = models.CharField(max_length=255, verbose_name='Название')
+    description = models.TextField(blank=True, null=True, verbose_name='Описание')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='Статус')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium', verbose_name='Приоритет')
+    start_date = models.DateField(null=True, blank=True, verbose_name='Дата начала')
+    end_date = models.DateField(null=True, blank=True, verbose_name='Дата окончания')
+    budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Бюджет')
+    manager = models.ForeignKey('Employee', on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_projects', verbose_name='Менеджер')
+    team = models.ManyToManyField('Employee', related_name='project_team', blank=True, verbose_name='Команда')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+
+    class Meta:
+        verbose_name = 'Проект'
+        verbose_name_plural = 'Проекты'
+        ordering = ['-created_at']
+
     def __str__(self):
         return self.title

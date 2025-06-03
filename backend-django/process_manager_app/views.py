@@ -8,20 +8,24 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     Department, Employee, ProcessTemplate, Process, 
-    TaskType, Task, TaskConnection, TaskComment, Notification
+    TaskType, Task, TaskConnection, TaskComment, Notification, Project
 )
 from .serializers import (
     DepartmentSerializer, EmployeeSerializer, ProcessTemplateSerializer,
     ProcessSerializer, ProcessDetailSerializer, TaskTypeSerializer,
     TaskSerializer, TaskConnectionSerializer, TaskCommentSerializer,
-    NotificationSerializer, UserSerializer
+    NotificationSerializer, UserSerializer, ProjectSerializer
 )
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, RetrieveAPIView
+from django.contrib.auth import login, logout, authenticate
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
+from django.http import JsonResponse
 
 # Стандартный пагинатор для всех списков
 class StandardResultsSetPagination(PageNumberPagination):
@@ -269,15 +273,36 @@ class TaskViewSet(viewsets.ModelViewSet):
         except Employee.DoesNotExist:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            return Response(
+                {"error": str(e), "details": "Ошибка при создании задачи"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class TaskConnectionViewSet(viewsets.ModelViewSet):
     """
     API для управления связями между задачами.
     """
     queryset = TaskConnection.objects.all()
     serializer_class = TaskConnectionSerializer
-    permission_classes = [permissions.AllowAny]  # Изменено с IsAuthenticated на AllowAny
+    permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['source_task', 'target_task', 'connection_type']
+    http_method_names = ['get', 'post', 'delete', 'options']  # Добавляем options
+
+    def create(self, request, *args, **kwargs):
+        print('Получены данные для создания связи:', request.data)
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            print('Ошибка при создании связи:', str(e))
+            return Response(
+                {"error": str(e), "details": "Ошибка при создании связи"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class TaskCommentViewSet(viewsets.ModelViewSet):
     """
@@ -341,22 +366,36 @@ class RegisterView(CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
-        # Создаем профиль сотрудника для нового пользователя
-        Employee.objects.create(
-            user=user,
-            name=user.get_full_name() or user.username,
-            email=user.email,
-            position="Новый сотрудник"  # Позиция по умолчанию
-        )
-        
-        return Response(
-            {"message": "User registered successfully"},
-            status=status.HTTP_201_CREATED
-        )
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Создаем пользователя
+            user = serializer.save()
+            
+            # Создаем профиль сотрудника
+            employee_data = {
+                'user': user,
+                'name': f"{user.first_name} {user.last_name}".strip() or user.username,
+                'email': user.email,
+                'role': request.data.get('role', 'employee'),
+                'position': "Администратор" if request.data.get('role') == 'admin' else "Сотрудник"
+            }
+            Employee.objects.create(**employee_data)
+            
+            # Автоматически входим пользователя после регистрации
+            login(request, user)
+            
+            return Response({
+                'user': UserSerializer(user).data,
+                'message': 'Пользователь успешно зарегистрирован'
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e),
+                'message': 'Ошибка при регистрации пользователя'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 # Представление для получения информации о текущем пользователе
 class CurrentUserView(RetrieveAPIView):
@@ -368,3 +407,167 @@ class CurrentUserView(RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API для управления пользователями.
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]  # Временно AllowAny для отладки
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    filterset_fields = ['is_staff', 'is_active']
+    ordering_fields = ['username', 'date_joined']
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        # Запрещаем удаление самого себя
+        if user == request.user:
+            return Response(
+                {"error": "Вы не можете удалить свой собственный аккаунт"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().destroy(request, *args, **kwargs)
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    """
+    API для управления проектами.
+    """
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
+    search_fields = ['title', 'description']
+    filterset_fields = ['status', 'priority', 'manager', 'team']
+    ordering_fields = ['title', 'status', 'priority', 'start_date', 'end_date', 'created_at', 'updated_at']
+
+    @action(detail=True, methods=['get'])
+    def tasks(self, request, pk=None):
+        """
+        Получить все задачи проекта.
+        """
+        project = self.get_object()
+        tasks = Task.objects.filter(project=project)
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def create_task(self, request, pk=None):
+        """
+        Создать новую задачу в проекте.
+        """
+        project = self.get_object()
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(project=project)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TaskTypeListCreate(APIView):
+    def get(self, request):
+        task_types = TaskType.objects.all()
+        serializer = TaskTypeSerializer(task_types, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = TaskTypeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProcessListCreate(APIView):
+    def post(self, request):
+        serializer = ProcessSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if username is None or password is None:
+            return Response({'error': 'Пожалуйста, укажите имя пользователя и пароль'},
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        user = authenticate(username=username, password=password)
+        
+        if user is None:
+            return Response({'error': 'Неверное имя пользователя или пароль'},
+                          status=status.HTTP_401_UNAUTHORIZED)
+        
+        login(request, user)
+        
+        try:
+            employee = Employee.objects.get(user=user)
+            return Response({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'employee': {
+                    'id': employee.id,
+                    'name': employee.name,
+                    'position': employee.position,
+                    'role': employee.role
+                }
+            })
+        except Employee.DoesNotExist:
+            return Response({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff
+            })
+
+class LogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        return Response({"detail": "Successfully logged out."})
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class UserView(APIView):
+    permission_classes = [AllowAny]  # Временно разрешаем доступ всем для отладки
+
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            employee = Employee.objects.get(user=request.user)
+            return Response({
+                'id': request.user.id,
+                'username': request.user.username,
+                'email': request.user.email,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+                'is_staff': request.user.is_staff,
+                'employee': {
+                    'id': employee.id,
+                    'name': employee.name,
+                    'position': employee.position,
+                    'role': employee.role
+                }
+            })
+        except Employee.DoesNotExist:
+            return Response({
+                'id': request.user.id,
+                'username': request.user.username,
+                'email': request.user.email,
+                'first_name': request.user.first_name,
+                'last_name': request.user.last_name,
+                'is_staff': request.user.is_staff
+            })

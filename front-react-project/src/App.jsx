@@ -4,10 +4,10 @@ import HomePage from './pages/HomePage';
 import ProjectEditor from './pages/ProjectEditor';
 import ProjectsPage from './pages/ProjectsPage';
 import EmployeesPage from './pages/EmployeesPage';
-import Header from './components/Header/Header';
-import Footer from './components/Footer/Footer';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import EmployeeRegister from './components/Auth/EmployeeRegister';
+import UserManagement from './components/Users/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import './App.css';
 
@@ -20,50 +20,64 @@ const PrivateRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Router>
-      {/* Обертка для flex layout */}
-      <div className="app-container"> 
-        {/* Основной контент */}
-        <main className="main-content"> 
-          <Routes>
-            {/* Публичные маршруты */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<HomePage />} />
+      <AuthProvider>
+        {/* Обертка для flex layout */}
+        <div className="app-container"> 
+          {/* Основной контент */}
+          <main className="main-content"> 
+            <Routes>
+              {/* Публичные маршруты */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<HomePage />} />
 
-            {/* Защищенные маршруты */}
-            <Route 
-              path="/projects" 
-              element={
-                <PrivateRoute>
-                  <ProjectsPage />
-                </PrivateRoute>
-              } 
-            />
-            <Route 
-              path="/editor/:projectId" 
-              element={<PrivateRoute><ProjectEditor /></PrivateRoute>} 
-            />
-            <Route 
-              path="/editor" 
-              element={<PrivateRoute><ProjectEditor /></PrivateRoute>} 
-            />
-            <Route 
-              path="/employees" 
-              element={<PrivateRoute><EmployeesPage /></PrivateRoute>} 
-            />
-          </Routes>
-        </main>
-      </div>
+              {/* Защищенные маршруты */}
+              <Route 
+                path="/projects" 
+                element={
+                  <PrivateRoute>
+                    <ProjectsPage />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/projects/:id" 
+                element={
+                  <PrivateRoute>
+                    <ProjectEditor />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/editor/:projectId" 
+                element={<PrivateRoute><ProjectEditor /></PrivateRoute>} 
+              />
+              <Route 
+                path="/editor" 
+                element={<PrivateRoute><ProjectEditor /></PrivateRoute>} 
+              />
+              <Route 
+                path="/employees" 
+                element={<PrivateRoute><EmployeesPage /></PrivateRoute>} 
+              />
+              <Route 
+                path="/register-employee" 
+                element={<PrivateRoute><EmployeeRegister /></PrivateRoute>} 
+              />
+              <Route 
+                path="/users" 
+                element={<PrivateRoute><UserManagement /></PrivateRoute>} 
+              />
+            </Routes>
+          </main>
+        </div>
+      </AuthProvider>
     </Router>
   );
 }
 
 function App() {
-  return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
-  );
+  return <AppRoutes />;
 }
 
 export default App;

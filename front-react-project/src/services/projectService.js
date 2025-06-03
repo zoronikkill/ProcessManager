@@ -3,16 +3,16 @@ import apiService from './apiService';
 /**
  * Сервис для управления проектами
  */
-export const projectService = {
+const projectService = {
   /**
    * Получает список всех проектов
    * @param {Object} params - Параметры запроса для фильтрации
    * @returns {Promise<Array>} - Массив проектов
    */
-  getAll: async (params = {}) => {
+  async getAll(params = {}) {
     try {
-      const response = await apiService.get('/projects', params);
-      return response.data;
+      const response = await apiService.get('/api/projects/', params);
+      return Array.isArray(response) ? response : response.results || [];
     } catch (error) {
       console.error('Error fetching projects:', error);
       return [];
@@ -24,13 +24,13 @@ export const projectService = {
    * @param {string|number} id - Идентификатор проекта
    * @returns {Promise<Object>} - Данные проекта
    */
-  getById: async (id) => {
+  async getById(id) {
     try {
-      const response = await apiService.get(`/projects/${id}`);
-      return response.data;
+      const response = await apiService.get(`/api/projects/${id}/`);
+      return response;
     } catch (error) {
       console.error('Error fetching project:', error);
-      return null;
+      throw error;
     }
   },
 
@@ -39,14 +39,19 @@ export const projectService = {
    * @param {Object} projectData - Данные нового проекта
    * @returns {Promise<Object>} - Созданный проект
    */
-  create: async (projectData) => {
+  async create(projectData) {
     try {
-      const response = await apiService.post('/projects', projectData);
-      return response.data;
+      const response = await apiService.post('/api/projects/', projectData);
+      return response;
     } catch (error) {
       console.error('Error creating project:', error);
       throw error;
     }
+  },
+
+  // Алиас для обратной совместимости
+  createProject: function(projectData) {
+    return this.create(projectData);
   },
 
   /**
@@ -55,24 +60,19 @@ export const projectService = {
    * @param {Object} projectData - Обновленные данные проекта
    * @returns {Promise<Object>} - Обновленный проект
    */
-  update: async (id, projectData) => {
+  async update(id, projectData) {
     try {
-      const response = await apiService.put(`/projects/${id}`, projectData);
-      return response.data;
+      const response = await apiService.put(`/api/projects/${id}/`, projectData);
+      return response;
     } catch (error) {
       console.error('Error updating project:', error);
-      return null;
+      throw error;
     }
   },
 
-  /**
-   * Частично обновляет данные проекта
-   * @param {string|number} id - Идентификатор проекта
-   * @param {Object} projectData - Частичные данные для обновления
-   * @returns {Promise<Object>} - Обновленный проект
-   */
-  partialUpdate: async (id, projectData) => {
-    return apiService.patch(`/projects/${id}`, projectData);
+  // Алиас для обратной совместимости
+  updateProject: function(id, projectData) {
+    return this.update(id, projectData);
   },
 
   /**
@@ -80,22 +80,34 @@ export const projectService = {
    * @param {string|number} id - Идентификатор проекта
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  delete: async (id) => {
+  async delete(id) {
     try {
-      await apiService.delete(`/projects/${id}`);
+      await apiService.delete(`/api/projects/${id}/`);
+      return true;
     } catch (error) {
       console.error('Error deleting project:', error);
       throw error;
     }
   },
 
+  // Алиас для обратной совместимости
+  deleteProject: function(id) {
+    return this.delete(id);
+  },
+
   /**
-   * Получает задачи в проекте
-   * @param {string|number} id - Идентификатор проекта
+   * Получает задачи проекта
+   * @param {string|number} projectId - Идентификатор проекта
    * @returns {Promise<Array>} - Массив задач
    */
-  getTasks: async (id) => {
-    return apiService.get(`/projects/${id}/tasks`);
+  async getProjectTasks(projectId) {
+    try {
+      const response = await apiService.get(`/api/projects/${projectId}/tasks/`);
+      return Array.isArray(response) ? response : response.results || [];
+    } catch (error) {
+      console.error('Error fetching project tasks:', error);
+      return [];
+    }
   },
 
   /**
@@ -103,8 +115,14 @@ export const projectService = {
    * @param {string|number} id - Идентификатор проекта
    * @returns {Promise<Array>} - Массив участников
    */
-  getParticipants: async (id) => {
-    return apiService.get(`/projects/${id}/participants`);
+  async getParticipants(id) {
+    try {
+      const response = await apiService.get(`/api/projects/${id}/participants/`);
+      return Array.isArray(response) ? response : response.results || [];
+    } catch (error) {
+      console.error('Error fetching project participants:', error);
+      return [];
+    }
   },
 
   /**
@@ -114,11 +132,20 @@ export const projectService = {
    * @param {Object} role - Роль сотрудника в проекте
    * @returns {Promise<Object>} - Результат операции
    */
-  addParticipant: async (projectId, employeeId, role) => {
-    return apiService.post(`/projects/${projectId}/participants`, { 
-      employee_id: employeeId,
-      role
-    });
+  async addParticipant(projectId, employeeId, role) {
+    try {
+      const response = await apiService.post(`/api/projects/${projectId}/participants/`, { 
+        employee_id: employeeId,
+        role
+      });
+      return response;
+    } catch (error) {
+      console.error('Error adding project participant:', error);
+      if (error.response?.data) {
+        throw new Error(JSON.stringify(error.response.data));
+      }
+      throw error;
+    }
   },
 
   /**
@@ -127,7 +154,41 @@ export const projectService = {
    * @param {string|number} employeeId - Идентификатор сотрудника
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  removeParticipant: async (projectId, employeeId) => {
-    return apiService.delete(`/projects/${projectId}/participants/${employeeId}`);
+  async removeParticipant(projectId, employeeId) {
+    try {
+      await apiService.delete(`/api/projects/${projectId}/participants/${employeeId}/`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error removing project participant:', error);
+      if (error.response?.data) {
+        throw new Error(JSON.stringify(error.response.data));
+      }
+      throw error;
+    }
+  },
+
+  async createProcess(processData) {
+    try {
+      const response = await apiService.post('/api/processes/', processData);
+      return response;
+    } catch (error) {
+      console.error('Error creating process:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Создает новую задачу в проекте
+   */
+  async createProjectTask(projectId, taskData) {
+    try {
+      const response = await apiService.post(`/api/projects/${projectId}/tasks/`, taskData);
+      return response;
+    } catch (error) {
+      console.error('Error creating project task:', error);
+      throw error;
+    }
   }
 };
+
+export default projectService;

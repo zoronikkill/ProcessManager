@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import authService from '../../services/authService';
 import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import './Auth.css';
@@ -10,70 +11,97 @@ const Register = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    isAdmin: false
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (formData.username.length < 3) {
       setError('Имя пользователя должно содержать минимум 3 символа');
+      setLoading(false);
       return;
     }
 
     if (!formData.email.includes('@')) {
       setError('Пожалуйста, введите корректный email');
+      setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
       setError('Пароль должен содержать минимум 6 символов');
+      setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Пароли не совпадают');
+      setLoading(false);
       return;
     }
 
     try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      const adminExists = users.some(user => user.role === 'admin');
-      if (adminExists) {
-        setError('Администратор уже зарегистрирован в системе');
-        return;
-      }
-
-      if (users.some(user => user.email === formData.email)) {
-        setError('Пользователь с таким email уже существует');
-        return;
-      }
-
-      const newAdmin = {
-        id: Date.now().toString(),
+      const registrationData = {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: 'admin',
-        created_at: new Date().toISOString()
+        role: formData.isAdmin ? 'admin' : 'employee',
+        is_staff: formData.isAdmin,
+        is_superuser: formData.isAdmin
       };
 
-      users.push(newAdmin);
-      localStorage.setItem('users', JSON.stringify(users));
+      console.log('Отправка данных для регистрации:', registrationData);
+      
+      await authService.register(registrationData);
       navigate('/login');
     } catch (err) {
-      setError('Ошибка при регистрации');
+      console.error('Ошибка при регистрации:', err);
+      
+      // Улучшенная обработка ошибок
+      if (err.response?.data) {
+        const errorData = err.response.data;
+        
+        // Если есть сообщение об ошибке
+        if (errorData.message || errorData.detail) {
+          setError(errorData.message || errorData.detail);
+        }
+        // Если есть объект с ошибками валидации
+        else if (typeof errorData === 'object') {
+          const errorMessages = Object.entries(errorData)
+            .map(([field, errors]) => {
+              // Проверяем, является ли errors массивом
+              if (Array.isArray(errors)) {
+                return `${field}: ${errors.join(', ')}`;
+              }
+              // Если это строка или другой тип данных
+              return `${field}: ${errors}`;
+            })
+            .filter(message => message) // Убираем пустые сообщения
+            .join('\n');
+          
+          setError(errorMessages || 'Произошла ошибка при регистрации');
+        } else {
+          setError('Произошла ошибка при регистрации');
+        }
+      } else {
+        setError('Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,8 +110,8 @@ const Register = () => {
       <Header />
       <div className="auth-container">
         <div className="auth-form-container">
-          <h2>Регистрация администратора</h2>
-          {error && <div className="error-message">{error}</div>}
+          <h2>Регистрация</h2>
+          {error && <div className="error-message" style={{ whiteSpace: 'pre-line' }}>{error}</div>}
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
               <label htmlFor="username">Имя пользователя</label>
@@ -95,6 +123,7 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 placeholder="Введите имя пользователя (минимум 3 символа)"
+                disabled={loading}
               />
             </div>
             <div className="form-group">
@@ -107,6 +136,7 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 placeholder="Введите ваш email"
+                disabled={loading}
               />
             </div>
             <div className="form-group">
@@ -119,6 +149,7 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 placeholder="Введите пароль (минимум 6 символов)"
+                disabled={loading}
               />
             </div>
             <div className="form-group">
@@ -131,9 +162,24 @@ const Register = () => {
                 onChange={handleChange}
                 required
                 placeholder="Подтвердите пароль"
+                disabled={loading}
               />
             </div>
-            <button type="submit" className="submit-btn">Зарегистрироваться</button>
+            <div className="form-group checkbox-group">
+              <label>
+                <input
+                  type="checkbox"
+                  name="isAdmin"
+                  checked={formData.isAdmin}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+                Зарегистрировать как администратора
+              </label>
+            </div>
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+            </button>
           </form>
           <div className="auth-links">
             <p>

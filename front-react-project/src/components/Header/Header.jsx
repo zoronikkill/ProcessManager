@@ -1,21 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Header.css';
 import Button from '../Button/Button';
-import { authService } from '../../services/authService';
+import authService from '../../services/authService';
 
 function Header() {
   const navigate = useNavigate();
-  const currentUser = authService.getCurrentUser();
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const fetchUser = async () => {
+    try {
+      if (authService.isAuthenticated()) {
+        const user = await authService.getCurrentUser();
+        console.log('Данные пользователя в Header:', user);
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (error) {
+      console.error('Ошибка при получении данных пользователя:', error);
+      setCurrentUser(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  // Добавляем интервал для периодической проверки статуса авторизации
+  useEffect(() => {
+    const interval = setInterval(fetchUser, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
-    await authService.logout();
-    navigate('/login');
+    try {
+      await authService.logout();
+      setCurrentUser(null);
+      navigate('/login');
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+      setCurrentUser(null);
+      navigate('/login');
+    }
   };
 
   const handleAddEmployee = () => {
     navigate('/register-employee');
   };
+
+  // Добавляем проверку и логирование для отладки
+  console.log('Текущий пользователь:', currentUser);
+  console.log('Роль пользователя:', currentUser?.role);
+  console.log('Является ли админом:', currentUser?.role === 'admin');
 
   return (
     <header className="header">
@@ -27,6 +64,7 @@ function Header() {
           {currentUser ? (
             <>
               <Link to="/projects">Проекты</Link>
+              <Link to="/users">Управление пользователями</Link>
               {currentUser.role === 'admin' && (
                 <>
                   <Link to="/employees">Сотрудники</Link>

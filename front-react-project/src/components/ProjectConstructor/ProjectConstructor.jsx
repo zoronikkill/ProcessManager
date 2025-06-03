@@ -4,22 +4,19 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import "./ProjectConstructor.css";
 import Button from "../Button/Button";
 import { useParams, useNavigate } from "react-router-dom";
-import { projectService } from "../../services/projectService";
-import { taskService } from "../../services/taskService";
+import projectService from "../../services/projectService";
+import taskService from "../../services/taskService";
+import employeeService from "../../services/employeeService";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import DraggableTask from "./DraggableTask";
 import ProjectArea from "./ProjectArea";
 import TaskForm from "./TaskForm";
+import apiService from '../../services/apiService';
 
 function ProjectConstructor() {
-  const [initialTasks, setInitialTasks] = useState([
-    { id: 1, name: "Анализ требований" },
-    { id: 2, name: "Проектирование" },
-    { id: 3, name: "Разработка" },
-  ]);
-
-  const [projectAreaTasks, setProjectAreaTasks] = useState([]);
+  const [initialTasks, setInitialTasks] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [connections, setConnections] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [newTaskName, setNewTaskName] = useState("");
@@ -40,7 +37,16 @@ function ProjectConstructor() {
     budget: "",
     manager: "",
     team: [],
+    process: null
   });
+
+  useEffect(() => {
+    const handleSave = () => saveProject();
+    document.addEventListener("saveProject", handleSave);
+    return () => {
+      document.removeEventListener("saveProject", handleSave);
+    };
+  }, [tasks, connections, formData]);
 
   useEffect(() => {
     if (projectId) {
@@ -50,30 +56,126 @@ function ProjectConstructor() {
     }
   }, [projectId]);
 
+  useEffect(() => {
+    const loadEmployees = async () => {
+      try {
+        const employeesList = await employeeService.getAll();
+        setEmployees(Array.isArray(employeesList) ? employeesList : []);
+      } catch (error) {
+        console.error('Error loading employees:', error);
+        setEmployees([]);
+      }
+    };
+
+    loadEmployees();
+  }, []);
+
+  useEffect(() => {
+    const loadTaskTypes = async () => {
+      try {
+        const taskTypes = await taskService.getTaskTypes();
+        const typesArray = Array.isArray(taskTypes) ? taskTypes : [];
+        
+        if (!projectId) {
+          const defaultTasks = [
+            { 
+              name: "Анализ требований",
+              status: 'not_started',
+              priority: 'medium',
+              description: 'Анализ требований проекта'
+            },
+            { 
+              name: "Проектирование",
+              status: 'not_started',
+              priority: 'medium',
+              description: 'Проектирование системы'
+            },
+            { 
+              name: "Разработка",
+              status: 'not_started',
+              priority: 'medium',
+              description: 'Разработка системы'
+            },
+          ];
+
+          if (typesArray.length === 0) {
+            await taskService.createDefaultTaskTypes();
+            const updatedTypes = await taskService.getTaskTypes();
+            setInitialTasks(defaultTasks.map((t, index) => ({
+              ...t,
+              id: index + 1,
+              taskType: (Array.isArray(updatedTypes) ? updatedTypes : [])
+                         .find(tt => tt.name === t.name)?.id || null
+            })));
+          } else {
+            setInitialTasks(defaultTasks.map((t, index) => ({
+              ...t,
+              id: index + 1,
+              taskType: typesArray.find(tt => tt.name === t.name)?.id || typesArray[0]?.id || null
+            })));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading task types:', error);
+        setInitialTasks([]);
+      }
+    };
+
+    loadTaskTypes();
+  }, [projectId]);
+
+  const initializeProcess = async () => {
+    try {
+      console.log('Creating new process...');
+      const process = await projectService.createProcess({ 
+        title: 'Новый процесс',
+        status: 'active'
+      });
+      console.log('Process creation response:', process);
+      if (!process || !process.id) {
+        console.error('Process response is invalid:', process);
+        throw new Error('Не удалось создать процесс: отсутствует ID');
+      }
+      console.log('Setting process ID:', process.id);
+      setFormData(prev => ({ ...prev, process: process.id }));
+      console.log('Process ID set successfully');
+    } catch (error) {
+      console.error('Ошибка создания процесса:', error);
+      setError('Ошибка при создании процесса. Пожалуйста, попробуйте еще раз.');
+    }
+  };
+
+  useEffect(() => {
+    if (!projectId) {
+      initializeProcess();
+    }
+  }, []);
+
   const loadProject = async (id) => {
     try {
       setLoading(true);
       const project = await projectService.getById(id);
-      if (project) {
-        setFormData({
-          title: project.title || "",
-          description: project.description || "",
-          startDate: project.startDate || "",
-          endDate: project.endDate || "",
-          status: project.status || "active",
-          priority: project.priority || "medium",
-          budget: project.budget || "",
-          manager: project.manager || "",
-          team: project.team || [],
-        });
-
-        const projectTasks = await taskService.getTasks(id);
-        setProjectAreaTasks(projectTasks);
-        setConnections(project.connections || []);
+      if (!project) {
+        throw new Error("Проект не найден");
       }
-      setError(null);
+      setFormData({
+        title: project.title || "",
+        description: project.description || "",
+        startDate: project.start_date || "",
+        endDate: project.end_date || "",
+        status: project.status || "active",
+        priority: project.priority || "medium",
+        budget: project.budget || "",
+        manager: project.manager || "",
+        team: project.team || [],
+        process: project.process || 1
+      });
+
+      const projectTasks = await taskService.getTasks(id);
+      setTasks(projectTasks);
+      setConnections(project.connections || []);
     } catch (err) {
-      setError("Ошибка при загрузке проекта");
+      setError(err.message || "Ошибка при загрузке проекта");
       console.error("Ошибка загрузки проекта:", err);
     } finally {
       setLoading(false);
@@ -82,21 +184,118 @@ function ProjectConstructor() {
 
   const saveProject = async () => {
     try {
+      if (!formData.title) {
+        throw new Error("Название проекта обязательно для заполнения");
+      }
+
+      if (!formData.process) {
+        throw new Error("Не создан процесс для проекта");
+      }
+
+      // Проверяем существование процесса
+      try {
+        const processResponse = await apiService.get(`/api/processes/${formData.process}/`);
+        if (!processResponse) {
+          throw new Error("Процесс не найден");
+        }
+      } catch (processError) {
+        console.error("Ошибка проверки процесса:", processError);
+        // Если процесс не найден, создаем новый
+        const newProcess = await projectService.createProcess({ 
+          title: 'Новый процесс',
+          status: 'active'
+        });
+        if (!newProcess || !newProcess.id) {
+          throw new Error("Не удалось создать новый процесс");
+        }
+        formData.process = newProcess.id;
+      }
+
+      const startDate = formData.startDate ? new Date(formData.startDate).toISOString() : null;
+      const endDate = formData.endDate ? new Date(formData.endDate).toISOString() : null;
+
       const projectData = {
-        ...formData,
-        tasks: projectAreaTasks,
-        connections: connections,
+        title: formData.title,
+        description: formData.description || '',
+        start_date: startDate,
+        end_date: endDate,
+        status: formData.status || 'active',
+        priority: formData.priority || 'medium',
+        budget: formData.budget || 0,
+        manager_id: formData.manager || null,
+        team: formData.team || [],
+        process: formData.process
       };
 
+      let savedProject;
       if (projectId) {
-        await projectService.update(projectId, projectData);
+        savedProject = await projectService.update(projectId, projectData);
       } else {
-        const newProject = await projectService.create(projectData);
-        navigate(`/projects/${newProject.id}`);
+        savedProject = await projectService.create(projectData);
       }
+
+      if (!savedProject) {
+        throw new Error("Не удалось сохранить проект");
+      }
+
+      // Создаем мапу для хранения соответствия временных ID и реальных ID задач
+      const taskIdMap = new Map();
+
+      // Сохраняем задачи и запоминаем их новые ID
+      for (const task of tasks) {
+        const taskData = {
+          name: task.name,
+          start_date: task.startDate ? new Date(task.startDate).toISOString() : null,
+          end_date: task.endDate ? new Date(task.endDate).toISOString() : null,
+          assignee_id: task.assignee || null,
+          position_x: task.x,
+          position_y: task.y,
+          status: 'not_started',
+          priority: 'medium',
+          process: formData.process,
+          description: task.description || '',
+          task_type: task.taskType
+        };
+
+        try {
+          const savedTask = await taskService.create(savedProject.id, taskData);
+          // Сохраняем соответствие временного ID и реального ID
+          taskIdMap.set(task.id, savedTask.id);
+        } catch (taskError) {
+          console.error("Ошибка при сохранении задачи:", {
+            taskData,
+            error: taskError.response?.data || taskError.message
+          });
+          throw new Error(`Ошибка при сохранении задачи "${task.name}": ${JSON.stringify(taskError.response?.data || taskError.message)}`);
+        }
+      }
+
+      // Создаем связи, используя реальные ID задач
+      for (const conn of connections) {
+        const sourceTaskId = taskIdMap.get(conn.from);
+        const targetTaskId = taskIdMap.get(conn.to);
+
+        if (!sourceTaskId || !targetTaskId) {
+          console.error('Не удалось найти соответствие ID для связи:', conn);
+          continue;
+        }
+
+        try {
+          await taskService.createTaskRelation(sourceTaskId, targetTaskId);
+        } catch (connError) {
+          console.error('Ошибка при создании связи:', {
+            connection: { from: sourceTaskId, to: targetTaskId },
+            error: connError
+          });
+          throw connError;
+        }
+      }
+
+      setError(null);
+      navigate("/projects");
     } catch (error) {
+      setError(error.message || "Ошибка при сохранении проекта");
       console.error("Ошибка сохранения:", error);
-      setError("Ошибка при сохранении проекта");
     }
   };
 
@@ -104,7 +303,7 @@ function ProjectConstructor() {
     if (newTaskName.trim() === "") return;
 
     const newTask = {
-      id: Date.now(),
+      id: Math.floor(Math.random() * 1000) + 1,
       name: newTaskName.trim(),
     };
 
@@ -148,38 +347,40 @@ function ProjectConstructor() {
         return;
       }
       
-      setProjectAreaTasks(prev => [...prev, { 
+      setTasks(prev => [...prev, { 
         ...value, 
-        id: taskId,
-        taskType: value.id,
+        id: Math.floor(Math.random() * 1000) + 1,
+        taskType: value.taskType || null,
         x: value.x || 0,
         y: value.y || 0
       }]);
       return;
     }
     
-    setProjectAreaTasks(prevTasks => {
+    setTasks(prevTasks => {
       const taskIndex = prevTasks.findIndex(task => task.id === taskId);
       if (taskIndex === -1) {
         console.error('Task not found:', taskId);
         return prevTasks;
       }
 
-      return prevTasks.map(task => {
-        if (task.id !== taskId) return task;
-
-        if (field === 'position') {
-          if (!value || typeof value.x !== 'number' || typeof value.y !== 'number') {
-            console.error('Invalid position data:', value);
-            return task;
-          }
+      if (field === 'position') {
+        if (!value || typeof value.x !== 'number' || typeof value.y !== 'number') {
+          console.error('Invalid position data:', value);
+          return prevTasks;
+        }
+        return prevTasks.map(task => {
+          if (task.id !== taskId) return task;
           return {
             ...task,
             x: Math.max(0, value.x),
             y: Math.max(0, value.y)
           };
-        }
+        });
+      }
 
+      return prevTasks.map(task => {
+        if (task.id !== taskId) return task;
         return {
           ...task,
           [field]: value || ""
@@ -204,9 +405,6 @@ function ProjectConstructor() {
       return;
     }
 
-    console.log('Deleting connection:', selectedConnection);
-    console.log('Current connections:', connections);
-
     const updatedConnections = connections.filter(
       (conn) =>
         !(
@@ -215,7 +413,6 @@ function ProjectConstructor() {
         )
     );
 
-    console.log('Updated connections:', updatedConnections);
     setConnections(updatedConnections);
     setSelectedConnection(null);
   };
@@ -279,7 +476,7 @@ function ProjectConstructor() {
           </div>
 
           <ProjectArea
-            projectAreaTasks={projectAreaTasks}
+            projectAreaTasks={tasks}
             onSelect={handleTaskSelect}
             onUpdate={handleTaskUpdate}
             employees={employees}
