@@ -43,9 +43,6 @@ function Header() {
   };
 
   // Добавляем проверку и логирование для отладки
-  console.log('Текущий пользователь:', currentUser);
-  console.log('Роль пользователя:', currentUser?.role);
-  console.log('Является ли админом:', currentUser?.role === 'admin');
 
   return (
     <header className="header">
