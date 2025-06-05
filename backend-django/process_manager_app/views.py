@@ -288,7 +288,7 @@ class TaskConnectionViewSet(viewsets.ModelViewSet):
     """
     queryset = TaskConnection.objects.all()
     serializer_class = TaskConnectionSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['source_task', 'target_task', 'connection_type']
     http_method_names = ['get', 'post', 'delete', 'options']  # Добавляем options
