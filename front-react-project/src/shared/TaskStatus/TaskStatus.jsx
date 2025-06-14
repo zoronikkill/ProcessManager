@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import style from "./TaskStatus.module.scss";
 
-const TaskStatus = () => {
-  const [status, setStatus] = useState("в работе");
+const TaskStatus = ({task_status}) => {
+  console.log("Task Component - Status:", task_status);
+  const [status, setStatus] = useState(task_status);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const statusOptions = ["В работе", "Завершено", "Получено", "Заморожено"];

@@ -13,3 +13,17 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.backButton {
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
