@@ -23,9 +23,6 @@ function Header() {
     fetchUser();
   }, []);
 
-  // Убираем интервал обновления, чтобы не спамить сервер
-  // Вместо этого будем обновлять данные при навигации
-
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -42,10 +39,10 @@ function Header() {
     navigate('/register-employee');
   };
 
-  // Добавляем проверку и логирование для отладки
+  const isAdmin = currentUser?.is_staff && currentUser?.is_superuser;
+
   console.log('Текущий пользователь:', currentUser);
-  console.log('Роль пользователя:', currentUser?.role);
-  console.log('Является ли админом:', currentUser?.role === 'admin');
+  console.log('Является ли админом:', isAdmin);
 
   return (
     <header className="header">
@@ -58,7 +55,7 @@ function Header() {
             <>
               <Link to="/projects">Проекты</Link>
               <Link to="/users">Управление пользователями</Link>
-              {currentUser.role === 'admin' && (
+              {isAdmin && (
                 <>
                   <Link to="/employees">Сотрудники</Link>
                   <Button 

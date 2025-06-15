@@ -1,6 +1,5 @@
 """
 URL-маршруты для Django REST framework API.
-Эти маршруты должны быть добавлены в файл urls.py вашего Django-приложения.
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -15,6 +14,20 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
+
+# Создаем роутер
+router = DefaultRouter()
+router.register(r'departments', views.DepartmentViewSet)
+router.register(r'employees', views.EmployeeViewSet)
+router.register(r'task-types', views.TaskTypeViewSet)
+router.register(r'process-templates', views.ProcessTemplateViewSet)
+router.register(r'processes', views.ProcessViewSet)
+router.register(r'projects', views.ProjectViewSet)
+router.register(r'tasks', views.TaskViewSet)
+router.register(r'task-connections', views.TaskConnectionViewSet, basename='task-connection')
+router.register(r'task-comments', views.TaskCommentViewSet)
+router.register(r'notifications', views.NotificationViewSet, basename='notification')
+router.register(r'users', views.UserViewSet)
 
 # Создаем корневое представление API с разрешением для всех
 @api_view(['GET'])
@@ -32,25 +45,15 @@ def api_root(request, format=None):
         'notifications': reverse('notification-list', request=request, format=format),
     })
 
-router = DefaultRouter()
-router.register(r'departments', views.DepartmentViewSet)
-router.register(r'employees', views.EmployeeViewSet)
-router.register(r'task-types', views.TaskTypeViewSet)
-router.register(r'process-templates', views.ProcessTemplateViewSet)
-router.register(r'processes', views.ProcessViewSet)
-router.register(r'projects', views.ProjectViewSet)
-router.register(r'tasks', views.TaskViewSet)
-router.register(r'task-connections', views.TaskConnectionViewSet, basename='task-connection')
-router.register(r'task-comments', views.TaskCommentViewSet)
-router.register(r'notifications', views.NotificationViewSet, basename='notification')
-router.register(r'users', views.UserViewSet)
-
 urlpatterns = [
-    # Корневой маршрут, перенаправляющий на API
-    path('', RedirectView.as_view(url='/api/', permanent=False)),
-    # Корневое представление API с разрешением для всех
-    path('api/', api_root, name='api-root'),
-    path('api/', include(router.urls)),
+    # Корневой маршрут API
+    path('', api_root, name='api-root'),
+    
+    # Включаем URL-маршруты роутера
+    path('', include(router.urls)),
+    
+    # Дополнительные маршруты
+    path('task-types/', views.TaskTypeListCreate.as_view()),
     
     # Маршруты аутентификации JWT
     path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -61,7 +64,6 @@ urlpatterns = [
     
     # REST framework авторизация
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('task-types/', views.TaskTypeListCreate.as_view()),
 ]
 
 # Также нужно добавить эти маршруты в основной urls.py проекта:

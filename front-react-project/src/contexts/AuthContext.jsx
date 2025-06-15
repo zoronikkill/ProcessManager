@@ -49,6 +49,11 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       console.log('AuthContext: успешный вход, ответ:', response);
       
+      // Проверяем права администратора
+      if (response.is_staff && response.is_superuser) {
+        console.log('AuthContext: пользователь является администратором');
+      }
+      
       // Устанавливаем данные пользователя
       setUser(response);
       
@@ -70,12 +75,14 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = () => !!user;
 
+  const isAdmin = () => user && user.is_staff && user.is_superuser;
+
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

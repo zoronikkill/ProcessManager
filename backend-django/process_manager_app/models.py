@@ -1,6 +1,5 @@
 """
 Модели данных для приложения Менеджер бизнес-процессов.
-Эти модели должны быть добавлены в файл models.py в вашем Django-приложении.
 """
 from django.db import models
 from django.contrib.auth.models import User
@@ -122,6 +121,7 @@ class Task(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название задачи")
     description = models.TextField(blank=True, null=True, verbose_name="Описание")
     process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name='tasks', verbose_name="Процесс")
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='tasks', verbose_name="Проект", null=True, blank=True)
     task_type = models.ForeignKey(TaskType, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks', verbose_name="Тип задачи")
     assignee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tasks', verbose_name="Исполнитель")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started', verbose_name="Статус")

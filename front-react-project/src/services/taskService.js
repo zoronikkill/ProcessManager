@@ -1,8 +1,5 @@
 import apiService from './apiService';
 
-/**
- * Сервис для управления задачами
- */
 const taskService = {
   /**
    * Получает список всех задач
@@ -64,7 +61,7 @@ const taskService = {
    */
   update: async (id, taskData) => {
     try {
-      const response = await apiService.put(`/api/tasks/${id}/`, taskData);
+      const response = await apiService.patch(`/api/tasks/${id}/`, taskData);
       return response;
     } catch (error) {
       console.error('Error updating task:', error);
@@ -179,6 +176,19 @@ const taskService = {
    */
   createTaskRelation: async (sourceTaskId, targetTaskId) => {
     try {
+      // Сначала проверяем, существует ли уже такая связь
+      const existingConnections = await apiService.get('/api/task-connections/', {
+        params: {
+          source_task: sourceTaskId,
+          target_task: targetTaskId
+        }
+      });
+
+      if (Array.isArray(existingConnections) && existingConnections.length > 0) {
+        console.log('Связь уже существует:', existingConnections[0]);
+        return existingConnections[0];
+      }
+
       const response = await apiService.post('/api/task-connections/', {
         source_task: sourceTaskId,
         target_task: targetTaskId,
@@ -195,33 +205,28 @@ const taskService = {
   },
 
   /**
-   * Удаляет связь между задачами
-   * @param {string|number} sourceTaskId - Идентификатор задачи-предшественника
-   * @param {string|number} targetTaskId - Идентификатор задачи-последователя
-   * @returns {Promise<{success: boolean}>} - Результат операции
+   * Удаляет все связи задачи
+   * @param {string|number} taskId - Идентификатор задачи
+   * @returns {Promise<boolean>} - Результат операции
    */
-  removeTaskRelation: async (sourceTaskId, targetTaskId) => {
+  deleteTaskConnections: async (taskId) => {
     try {
-      // Сначала найдем ID связи
       const connections = await apiService.get('/api/task-connections/', {
         params: {
-          source_task: sourceTaskId,
-          target_task: targetTaskId
+          source_task: taskId
         }
       });
       
-      if (Array.isArray(connections) && connections.length > 0) {
-        const connectionId = connections[0].id;
-        await apiService.delete(`/api/task-connections/${connectionId}/`);
+      if (Array.isArray(connections)) {
+        for (const conn of connections) {
+          await apiService.delete(`/api/task-connections/${conn.id}/`);
+        }
       }
       
-      return { success: true };
+      return true;
     } catch (error) {
-      console.error('Error removing task relation:', error);
-      if (error.response?.data) {
-        throw new Error(JSON.stringify(error.response.data));
-      }
-      throw error;
+      console.error('Error deleting task connections:', error);
+      return false;
     }
   },
 

@@ -14,7 +14,9 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    isAdmin: false
+    isAdmin: false,
+    firstName: '',
+    lastName: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,83 +32,56 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
-    if (formData.username.length < 3) {
-      setError('Имя пользователя должно содержать минимум 3 символа');
-      setLoading(false);
+    
+    if (!formData.username || formData.username.length < 3) {
+      setError('Имя пользователя должно быть не менее 3 символов');
       return;
     }
-
-    if (!formData.email.includes('@')) {
-      setError('Пожалуйста, введите корректный email');
-      setLoading(false);
+    
+    if (!formData.email || !formData.email.includes('@')) {
+      setError('Введите корректный email адрес');
       return;
     }
-
-    if (formData.password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
-      setLoading(false);
+    
+    if (!formData.password || formData.password.length < 6) {
+      setError('Пароль должен быть не менее 6 символов');
       return;
     }
-
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Пароли не совпадают');
-      setLoading(false);
       return;
     }
 
     try {
-      const registrationData = {
+      setLoading(true);
+      const response = await authService.register({
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        first_name: formData.firstName || '',
+        last_name: formData.lastName || '',
         role: formData.isAdmin ? 'admin' : 'employee',
         is_staff: formData.isAdmin,
         is_superuser: formData.isAdmin
-      };
-
-      console.log('Отправка данных для регистрации:', registrationData);
+      });
       
-      const response = await authService.register(registrationData);
+      console.log('Регистрация успешна:', response);
       
-      // После успешной регистрации автоматически входим в систему
-      if (response && response.id) {
-        // Обновляем контекст аутентификации с данными пользователя
-        await login({ user: response });
-        navigate('/projects');
-      } else {
-        // Если автоматический вход не удался, перенаправляем на страницу входа
-        navigate('/login');
-      }
-    } catch (err) {
-      console.error('Ошибка при регистрации:', err);
+      await authService.login({
+        username: formData.username,
+        password: formData.password
+      });
       
-      // Улучшенная обработка ошибок
-      if (err.response?.data) {
-        const errorData = err.response.data;
-        
-        // Если есть сообщение об ошибке
-        if (errorData.message || errorData.detail) {
-          setError(errorData.message || errorData.detail);
-        }
-        // Если есть объект с ошибками валидации
-        else if (typeof errorData === 'object') {
-          const errorMessages = Object.entries(errorData)
-            .map(([field, errors]) => {
-              // Проверяем, является ли errors массивом
-              if (Array.isArray(errors)) {
-                return `${field}: ${errors.join(', ')}`;
-              }
-              // Если это строка или другой тип данных
-              return `${field}: ${errors}`;
-            })
-            .filter(message => message) // Убираем пустые сообщения
-            .join('\n');
-          
-          setError(errorMessages || 'Произошла ошибка при регистрации');
+      navigate('/projects');
+    } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      if (error.response?.data) {
+        const serverErrors = error.response.data;
+        if (serverErrors.username) {
+          setError('Это имя пользователя уже занято');
         } else {
-          setError('Произошла ошибка при регистрации');
+          setError('Ошибка при регистрации: ' + JSON.stringify(serverErrors));
         }
       } else {
         setError('Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.');

@@ -1,8 +1,5 @@
 import apiService from './apiService';
 
-/**
- * Сервис для управления активными бизнес-процессами
- */
 class ProcessService {
   /**
    * Базовый эндпоинт для API бизнес-процессов
@@ -149,7 +146,7 @@ class ProcessService {
    * @returns {Promise<Object>} - Статистика бизнес-процесса
    */
   async getStatistics(id) {
-    return apiService.get(`${this.endpoint}/${id}/statistics`);
+    return apiService.get(`${this.endpoint}/${id}/statistics/`);
   }
 
   /**
@@ -159,7 +156,7 @@ class ProcessService {
    * @returns {Promise<Object>} - Созданный комментарий
    */
   async addComment(id, comment) {
-    return apiService.post(`${this.endpoint}/${id}/comments`, { text: comment });
+    return apiService.post(`${this.endpoint}/${id}/comments/`, { text: comment });
   }
 
   /**
@@ -168,7 +165,7 @@ class ProcessService {
    * @returns {Promise<Array>} - История изменений
    */
   async getHistory(id) {
-    return apiService.get(`${this.endpoint}/${id}/history`);
+    return apiService.get(`${this.endpoint}/${id}/history/`);
   }
 
   /**

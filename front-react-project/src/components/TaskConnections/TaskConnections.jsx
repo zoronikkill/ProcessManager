@@ -8,12 +8,9 @@ const TaskConnections = ({ tasks, connections }) => {
         if (!svgRef.current || !tasks.length || !connections.length) return;
 
         const updateConnections = () => {
-            // Очищаем существующие линии
             while (svgRef.current.firstChild) {
                 svgRef.current.removeChild(svgRef.current.firstChild);
             }
-
-            // Добавляем определение стрелки
             const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
             marker.setAttribute('id', 'arrowhead');
@@ -31,7 +28,6 @@ const TaskConnections = ({ tasks, connections }) => {
             defs.appendChild(marker);
             svgRef.current.appendChild(defs);
 
-            // Создаем линии для каждого соединения
             connections.forEach(conn => {
                 const fromTask = tasks.find(t => t.id === conn.from);
                 const toTask = tasks.find(t => t.id === conn.to);
@@ -49,13 +45,11 @@ const TaskConnections = ({ tasks, connections }) => {
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 
-                // Вычисляем точки для кривой Безье
                 const fromX = fromRect.left + fromRect.width - svgRect.left;
                 const fromY = fromRect.top + fromRect.height/2 - svgRect.top;
                 const toX = toRect.left - svgRect.left;
                 const toY = toRect.top + toRect.height/2 - svgRect.top;
                 
-                // Создаем кривую Безье
                 const controlPoint1X = fromX + 50;
                 const controlPoint1Y = fromY;
                 const controlPoint2X = toX - 50;

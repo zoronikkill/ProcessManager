@@ -1,18 +1,12 @@
 import apiService from './apiService';
 
-/**
- * Сервис аутентификации и авторизации
- */
 const authService = {
-  /**
-   * Получает данные текущего пользователя
-   */
+
   async getCurrentUser() {
     try {
       console.log('authService: запрос данных текущего пользователя');
       const response = await apiService.get('/api/auth/user/');
       console.log('authService: получены данные пользователя:', response);
-      // Если сервер вернул null, значит пользователь не аутентифицирован
       if (response === null) {
         return null;
       }
@@ -36,9 +30,6 @@ const authService = {
     return apiService.getToken();
   },
 
-  /**
-   * Проверяет, аутентифицирован ли пользователь
-   */
   async isAuthenticated() {
     try {
       const user = await this.getCurrentUser();
@@ -48,12 +39,18 @@ const authService = {
     }
   },
 
-  /**
-   * Выполняет вход пользователя
-   */
-  async login(username, password) {
+
+  async login(credentials) {
     try {
-      const response = await apiService.post('/api/auth/login/', { username, password });
+      const response = await apiService.post('/api/auth/login/', {
+        username: credentials.username,
+        password: credentials.password
+      });
+
+      if (response.is_staff && response.is_superuser) {
+        console.log('Пользователь является администратором');
+      }
+      
       return response;
     } catch (error) {
       console.error('Ошибка при входе:', error);
@@ -61,9 +58,6 @@ const authService = {
     }
   },
 
-  /**
-   * Выполняет выход пользователя
-   */
   async logout() {
     try {
       await apiService.post('/api/auth/logout/');
@@ -74,19 +68,27 @@ const authService = {
     }
   },
 
-  /**
-   * Регистрирует нового пользователя
-   */
   async register(userData) {
     try {
-      // Получаем CSRF-токен перед регистрацией
       await apiService.get('/api/auth/csrf/');
+
+      if (!userData.username || !userData.email || !userData.password) {
+        throw new Error('Не все обязательные поля заполнены');
+      }
+
+      const logData = { ...userData };
+      delete logData.password;
+      console.log('Подготовленные данные для регистрации:', logData);
       
       const response = await apiService.post('/api/auth/register/', userData);
+      console.log('Успешный ответ от сервера:', response);
       return response;
     } catch (error) {
       console.error('Ошибка при регистрации:', error);
-      console.error('Детали ошибки:', error.data);
+      if (error.response) {
+        console.error('Статус ошибки:', error.response.status);
+        console.error('Данные ошибки:', error.response.data);
+      }
       throw error;
     }
   },
@@ -96,7 +98,7 @@ const authService = {
    * @param {string} email - Email пользователя
    * @returns {Promise<{success: boolean}>} - Результат операции
    */
-  requestPasswordReset: async (email) => {
+  async requestPasswordReset(email) {
     const requestPasswordResetEndpoint = '/auth/password-reset/';
     return apiService.post(requestPasswordResetEndpoint, { email });
   },
@@ -119,22 +121,23 @@ const authService = {
    * Получает список всех пользователей
    * @returns {Promise<Array>} - Список пользователей
    */
-  getUsers: async () => {
+  async getUsers() {
     try {
       console.log('Запрос списка пользователей...');
       const response = await apiService.get('/api/users/');
       console.log('Получен список пользователей:', response);
       
-      // Проверяем, что ответ содержит поле results с массивом пользователей
       if (response && response.results && Array.isArray(response.results)) {
         return response.results;
+      } else if (response && Array.isArray(response)) {
+        return response;
       } else {
         console.error('Некорректный формат данных:', response);
         throw new Error('Получены некорректные данные от сервера');
       }
     } catch (error) {
       console.error('Ошибка при получении списка пользователей:', error);
-      if (error.response) {
+      if (error.response?.data) {
         console.error('Детали ошибки:', error.response.data);
         throw new Error(error.response.data.detail || 'Ошибка при получении списка пользователей');
       }

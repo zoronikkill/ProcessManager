@@ -154,10 +154,15 @@ function ProjectConstructor() {
   const loadProject = async (id) => {
     try {
       setLoading(true);
+      console.log('Загрузка проекта с ID:', id);
+      
       const project = await projectService.getById(id);
+      console.log('Загруженные данные проекта:', project);
+      
       if (!project) {
         throw new Error("Проект не найден");
       }
+
       setFormData({
         title: project.title || "",
         description: project.description || "",
@@ -168,15 +173,63 @@ function ProjectConstructor() {
         budget: project.budget || "",
         manager: project.manager || "",
         team: project.team || [],
-        process: project.process || 1
+        process: project.process || null
       });
 
-      const projectTasks = await taskService.getTasks(id);
-      setTasks(projectTasks);
-      setConnections(project.connections || []);
-    } catch (err) {
-      setError(err.message || "Ошибка при загрузке проекта");
-      console.error("Ошибка загрузки проекта:", err);
+      const projectTasks = await projectService.getProjectTasks(id);
+      console.log('Загруженные задачи проекта:', projectTasks);
+      
+      if (Array.isArray(projectTasks) && projectTasks.length > 0) {
+        const formattedTasks = projectTasks.map(task => ({
+          id: task.id,
+          name: task.name,
+          description: task.description,
+          x: task.position_x || 0,
+          y: task.position_y || 0,
+          startDate: task.start_date,
+          endDate: task.end_date,
+          status: task.status || 'not_started',
+          priority: task.priority || 'medium',
+          assignee: task.assignee_id,
+          taskType: task.task_type
+        }));
+
+        setTasks(formattedTasks);
+        console.log('Задачи установлены:', formattedTasks);
+      } else {
+        console.log('Задачи не найдены, устанавливаем пустой массив');
+        setTasks([]);
+      }
+      
+      try {
+        const taskConnections = await projectService.getProjectConnections(id);
+        console.log('Загруженные связи:', taskConnections);
+        
+        if (Array.isArray(taskConnections) && taskConnections.length > 0) {
+          const formattedConnections = taskConnections.map(conn => ({
+            id: conn.id,
+            sourceId: conn.source_task,
+            targetId: conn.target_task,
+            type: conn.connection_type || 'default'
+          }));
+          
+          setConnections(formattedConnections);
+          console.log('Связи установлены:', formattedConnections);
+        } else {
+          console.log('Связи не найдены, устанавливаем пустой массив');
+          setConnections([]);
+        }
+      } catch (connError) {
+        console.error('Ошибка при загрузке связей:', connError);
+        setConnections([]);
+      }
+
+      setError(null);
+    } catch (error) {
+      console.error('Ошибка при загрузке проекта:', error);
+      setError("Не удалось загрузить проект. Пожалуйста, попробуйте позже.");
+      setTasks([]);
+      setConnections([]);
     } finally {
       setLoading(false);
     }
@@ -192,7 +245,6 @@ function ProjectConstructor() {
         throw new Error("Не создан процесс для проекта");
       }
 
-      // Проверяем существование процесса
       try {
         const processResponse = await apiService.get(`/api/processes/${formData.process}/`);
         if (!processResponse) {
@@ -200,7 +252,6 @@ function ProjectConstructor() {
         }
       } catch (processError) {
         console.error("Ошибка проверки процесса:", processError);
-        // Если процесс не найден, создаем новый
         const newProcess = await projectService.createProcess({ 
           title: 'Новый процесс',
           status: 'active'
@@ -238,10 +289,8 @@ function ProjectConstructor() {
         throw new Error("Не удалось сохранить проект");
       }
 
-      // Создаем мапу для хранения соответствия временных ID и реальных ID задач
       const taskIdMap = new Map();
 
-      // Сохраняем задачи и запоминаем их новые ID
       for (const task of tasks) {
         const taskData = {
           name: task.name,
@@ -250,16 +299,27 @@ function ProjectConstructor() {
           assignee_id: task.assignee || null,
           position_x: task.x,
           position_y: task.y,
-          status: 'not_started',
-          priority: 'medium',
+          status: task.status || 'not_started',
+          priority: task.priority || 'medium',
           process: formData.process,
           description: task.description || '',
-          task_type: task.taskType
+          task_type: task.taskType,
+          project: savedProject.id
         };
 
         try {
-          const savedTask = await taskService.create(savedProject.id, taskData);
-          // Сохраняем соответствие временного ID и реального ID
+          console.log('Сохранение задачи:', { taskId: task.id, taskData });
+          let savedTask;
+          if (task.id && typeof task.id === 'string' && task.id.length > 30) {
+            console.log('Обновление существующей задачи:', task.id);
+            savedTask = await taskService.update(task.id, taskData);
+
+            await taskService.deleteTaskConnections(task.id);
+          } else {
+            console.log('Создание новой задачи');
+            savedTask = await taskService.create(savedProject.id, taskData);
+          }
+          console.log('Задача сохранена:', savedTask);
           taskIdMap.set(task.id, savedTask.id);
         } catch (taskError) {
           console.error("Ошибка при сохранении задачи:", {
@@ -270,10 +330,9 @@ function ProjectConstructor() {
         }
       }
 
-      // Создаем связи, используя реальные ID задач
       for (const conn of connections) {
-        const sourceTaskId = taskIdMap.get(conn.from);
-        const targetTaskId = taskIdMap.get(conn.to);
+        const sourceTaskId = taskIdMap.get(conn.sourceId);
+        const targetTaskId = taskIdMap.get(conn.targetId);
 
         if (!sourceTaskId || !targetTaskId) {
           console.error('Не удалось найти соответствие ID для связи:', conn);
@@ -281,13 +340,14 @@ function ProjectConstructor() {
         }
 
         try {
+          console.log('Создание связи между задачами:', { sourceTaskId, targetTaskId });
           await taskService.createTaskRelation(sourceTaskId, targetTaskId);
         } catch (connError) {
           console.error('Ошибка при создании связи:', {
             connection: { from: sourceTaskId, to: targetTaskId },
             error: connError
           });
-          throw connError;
+          console.warn('Пропускаем создание связи из-за ошибки');
         }
       }
 
@@ -320,16 +380,16 @@ function ProjectConstructor() {
       }
       
       const connectionExists = connections.some(
-        conn => (conn.from === selectedTask.id && conn.to === task.id) || 
-                (conn.from === task.id && conn.to === selectedTask.id)
+        conn => (conn.sourceId === selectedTask.id && conn.targetId === task.id) || 
+                (conn.sourceId === task.id && conn.targetId === selectedTask.id)
       );
       
       if (!connectionExists) {
         setConnections([
           ...connections,
           {
-            from: selectedTask.id,
-            to: task.id,
+            sourceId: selectedTask.id,
+            targetId: task.id,
           },
         ]);
       }
@@ -392,7 +452,7 @@ function ProjectConstructor() {
   const handleConnectionClick = (connection, e) => {
     e.stopPropagation();
     setSelectedConnection((prev) =>
-      prev?.from === connection.from && prev?.to === connection.to
+      prev?.sourceId === connection.sourceId && prev?.targetId === connection.targetId
         ? null
         : connection
     );
@@ -408,8 +468,8 @@ function ProjectConstructor() {
     const updatedConnections = connections.filter(
       (conn) =>
         !(
-          conn.from === selectedConnection.from &&
-          conn.to === selectedConnection.to
+          conn.sourceId === selectedConnection.sourceId &&
+          conn.targetId === selectedConnection.targetId
         )
     );
 

@@ -1,6 +1,5 @@
 """
 Представления (views) для Django REST framework, обрабатывающие запросы API.
-Эти представления должны быть добавлены в файл views.py в вашем Django-приложении.
 """
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
@@ -26,6 +25,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
+from django.db.models import Q
 
 # Стандартный пагинатор для всех списков
 class StandardResultsSetPagination(PageNumberPagination):
@@ -221,12 +221,13 @@ class TaskViewSet(viewsets.ModelViewSet):
     """
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [permissions.AllowAny]  # Изменено с IsAuthenticated на AllowAny
+    permission_classes = [permissions.AllowAny]
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
     search_fields = ['name', 'description']
-    filterset_fields = ['process', 'assignee', 'status', 'priority', 'task_type']
+    filterset_fields = ['process', 'assignee', 'status', 'priority', 'task_type', 'project']
     ordering_fields = ['name', 'status', 'priority', 'deadline', 'created_at', 'updated_at']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options']  # Разрешаем PATCH вместо PUT
 
     @action(detail=True, methods=['get'])
     def subtasks(self, request, pk=None):
@@ -279,6 +280,15 @@ class TaskViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {"error": str(e), "details": "Ошибка при создании задачи"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            return super().partial_update(request, *args, **kwargs)
+        except Exception as e:
+            return Response(
+                {"error": str(e), "details": "Ошибка при обновлении задачи"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -466,6 +476,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['get'])
+    def connections(self, request, pk=None):
+        """
+        Получить все связи между задачами проекта.
+        """
+        project = self.get_object()
+        # Получаем все задачи проекта
+        project_tasks = Task.objects.filter(project=project)
+        # Получаем все связи, где обе задачи принадлежат проекту
+        connections = TaskConnection.objects.filter(
+            source_task__in=project_tasks,
+            target_task__in=project_tasks
+        )
+        serializer = TaskConnectionSerializer(connections, many=True)
+        return Response(serializer.data)
+
 class TaskTypeListCreate(APIView):
     def get(self, request):
         task_types = TaskType.objects.all()
@@ -516,6 +542,7 @@ class LoginView(APIView):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
                 'employee': {
                     'id': employee.id,
                     'name': employee.name,
@@ -530,7 +557,8 @@ class LoginView(APIView):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'is_staff': user.is_staff
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
             })
 
 class LogoutView(APIView):
@@ -555,6 +583,7 @@ class UserView(APIView):
                 'first_name': request.user.first_name,
                 'last_name': request.user.last_name,
                 'is_staff': request.user.is_staff,
+                'is_superuser': request.user.is_superuser,
                 'employee': {
                     'id': employee.id,
                     'name': employee.name,
@@ -569,5 +598,6 @@ class UserView(APIView):
                 'email': request.user.email,
                 'first_name': request.user.first_name,
                 'last_name': request.user.last_name,
-                'is_staff': request.user.is_staff
+                'is_staff': request.user.is_staff,
+                'is_superuser': request.user.is_superuser
             })

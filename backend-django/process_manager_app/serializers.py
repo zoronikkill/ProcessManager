@@ -1,6 +1,5 @@
 """
 Сериализаторы для Django REST framework, которые преобразуют модели в JSON и обратно.
-Эти сериализаторы должны быть добавлены в файл serializers.py в вашем Django-приложении.
 """
 from rest_framework import serializers
 from .models import (
@@ -31,14 +30,6 @@ class UserSerializer(serializers.ModelSerializer):
             'is_staff': {'write_only': True, 'required': False},
             'is_superuser': {'write_only': True, 'required': False}
         }
-    
-    def validate_email(self, value):
-        """
-        Проверяем уникальность email.
-        """
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Пользователь с таким email уже существует.")
-        return value
     
     def validate(self, data):
         """

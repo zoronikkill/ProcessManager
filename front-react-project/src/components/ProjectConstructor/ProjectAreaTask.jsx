@@ -17,6 +17,17 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees = [], isSelected 
   // Убеждаемся, что employees является массивом
   const employeesList = Array.isArray(employees) ? employees : [];
 
+  const handleTaskClick = (e) => {
+    // Если клик был по инпуту или селекту, не обрабатываем его
+    if (
+      e.target.tagName.toLowerCase() === 'input' ||
+      e.target.tagName.toLowerCase() === 'select'
+    ) {
+      return;
+    }
+    onSelect(task);
+  };
+
   return (
     <div
       ref={drag}
@@ -27,15 +38,9 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees = [], isSelected 
         position: "absolute",
         cursor: "move"
       }}
-      onClick={() => onSelect(task)}
+      onClick={handleTaskClick}
     >
-      <div
-        className="task-header"
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect(task);
-        }}
-      >
+      <div className="task-header">
         {task.name}
       </div>
       <div className="task-details">
@@ -45,6 +50,7 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees = [], isSelected 
             type="date"
             value={task.startDate || ""}
             onChange={(e) => onUpdate(task.id, "startDate", e.target.value)}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
         <div>
@@ -53,6 +59,7 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees = [], isSelected 
             type="date"
             value={task.endDate || ""}
             onChange={(e) => onUpdate(task.id, "endDate", e.target.value)}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
         <div>
@@ -60,6 +67,7 @@ function ProjectAreaTask({ task, onSelect, onUpdate, employees = [], isSelected 
           <select
             value={task.assignee || ""}
             onChange={(e) => onUpdate(task.id, "assignee", e.target.value)}
+            onClick={(e) => e.stopPropagation()}
           >
             <option value="">Не назначено</option>
             {employeesList.map((emp) => (

@@ -73,7 +73,9 @@ const EmployeeRegister = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: 'employee'
+        role: 'employee',
+        is_staff: false,
+        is_superuser: false
       });
 
       let departmentData;
@@ -109,9 +111,7 @@ const EmployeeRegister = () => {
       
       if (err.response?.data) {
         const errors = err.response.data;
-        if (errors.email) {
-          errorMessage = Array.isArray(errors.email) ? errors.email[0] : errors.email;
-        } else if (errors.username) {
+        if (errors.username) {
           errorMessage = Array.isArray(errors.username) ? errors.username[0] : errors.username;
         } else if (errors.password) {
           errorMessage = Array.isArray(errors.password) ? errors.password[0] : errors.password;

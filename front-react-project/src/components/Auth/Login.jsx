@@ -41,7 +41,6 @@ const Login = () => {
       } else if (err.response?.data?.detail) {
         setError(err.response.data.detail);
       } else if (err.response?.data) {
-        // Если ошибка содержит объект с полями валидации
         const errorMessages = Object.entries(err.response?.data || {})
           .map(([field, errors]) => {
             if (Array.isArray(errors)) {

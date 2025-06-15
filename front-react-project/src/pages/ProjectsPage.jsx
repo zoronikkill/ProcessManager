@@ -12,12 +12,10 @@ const ProjectsPage = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Загрузка проектов при монтировании компонента
   useEffect(() => {
     fetchProjects();
   }, []);
 
-  // Функция загрузки проектов из API
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -31,13 +29,15 @@ const ProjectsPage = () => {
       setLoading(false);
     }
   };
-
-  // Обработчик удаления проекта
   const handleDelete = async (id) => {
     if (window.confirm("Вы уверены, что хотите удалить этот проект?")) {
       try {
-        await projectService.delete(id);
-        setProjects(projects.filter(project => project.id !== id));
+        const result = await projectService.delete(id);
+        if (result.success) {
+          setProjects(projects.filter(project => project.id !== id));
+        } else {
+          setError("Не удалось удалить проект. Пожалуйста, попробуйте позже.");
+        }
       } catch (err) {
         console.error("Error deleting project:", err);
         setError("Не удалось удалить проект. Пожалуйста, попробуйте позже.");
@@ -45,14 +45,12 @@ const ProjectsPage = () => {
     }
   };
 
-  // Фильтрация проектов по поисковому запросу
   const filteredProjects = Array.isArray(projects) 
     ? projects.filter(project => 
         project?.title?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
 
-  // Функция создания нового проекта и перехода в редактор
   const createNewProject = () => {
     navigate('/editor');
   };

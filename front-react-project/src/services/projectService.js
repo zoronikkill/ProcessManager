@@ -1,8 +1,5 @@
 import apiService from './apiService';
 
-/**
- * Сервис для управления проектами
- */
 const projectService = {
   /**
    * Получает список всех проектов
@@ -49,7 +46,6 @@ const projectService = {
     }
   },
 
-  // Алиас для обратной совместимости
   createProject: function(projectData) {
     return this.create(projectData);
   },
@@ -70,7 +66,6 @@ const projectService = {
     }
   },
 
-  // Алиас для обратной совместимости
   updateProject: function(id, projectData) {
     return this.update(id, projectData);
   },
@@ -82,15 +77,14 @@ const projectService = {
    */
   async delete(id) {
     try {
-      await apiService.delete(`/api/projects/${id}/`);
-      return true;
+      const response = await apiService.delete(`/api/projects/${id}/`);
+      return response;
     } catch (error) {
       console.error('Error deleting project:', error);
       throw error;
     }
   },
 
-  // Алиас для обратной совместимости
   deleteProject: function(id) {
     return this.delete(id);
   },
@@ -177,9 +171,6 @@ const projectService = {
     }
   },
 
-  /**
-   * Создает новую задачу в проекте
-   */
   async createProjectTask(projectId, taskData) {
     try {
       const response = await apiService.post(`/api/projects/${projectId}/tasks/`, taskData);
@@ -187,6 +178,21 @@ const projectService = {
     } catch (error) {
       console.error('Error creating project task:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Получает связи между задачами проекта
+   * @param {string|number} projectId - Идентификатор проекта
+   * @returns {Promise<Array>} - Массив связей между задачами
+   */
+  async getProjectConnections(projectId) {
+    try {
+      const response = await apiService.get(`/api/projects/${projectId}/connections/`);
+      return Array.isArray(response) ? response : response.results || [];
+    } catch (error) {
+      console.error('Error fetching project connections:', error);
+      return [];
     }
   }
 };

@@ -1,8 +1,5 @@
 import apiService from './apiService';
 
-/**
- * Сервис для управления данными сотрудников
- */
 const employeeService = {
   /**
    * Получает список всех сотрудников
@@ -49,7 +46,6 @@ const employeeService = {
     }
   },
 
-  // Алиас для обратной совместимости
   createEmployee: function(employeeData) {
     return this.create(employeeData);
   },
@@ -70,7 +66,6 @@ const employeeService = {
     }
   },
 
-  // Алиас для обратной совместимости
   updateEmployee: function(id, employeeData) {
     return this.update(id, employeeData);
   },

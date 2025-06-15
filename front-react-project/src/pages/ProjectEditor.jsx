@@ -2,10 +2,12 @@ import React from 'react';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import ProjectConstructor from '../components/ProjectConstructor/ProjectConstructor';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import './ProjectEditor.css';
 
 const ProjectEditor = () => {
+    const { id } = useParams();
+
     return (
         <div className="container">
             <Header />
@@ -18,10 +20,10 @@ const ProjectEditor = () => {
                     >
                         Сохранить проект
                     </button>
-                    <Link to="/" className="back-button">← На главную</Link>
+                    <Link to="/projects" className="back-button">← К проектам</Link>
                 </div>
             </div>
-            <ProjectConstructor />
+            <ProjectConstructor projectId={id} />
             <Footer />
         </div>
     );

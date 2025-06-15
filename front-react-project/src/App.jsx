@@ -11,7 +11,6 @@ import UserManagement from './components/Users/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import './App.css';
 
-// Компонент для защищенных маршрутов
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" />;
@@ -21,17 +20,13 @@ function AppRoutes() {
   return (
     <Router>
       <AuthProvider>
-        {/* Обертка для flex layout */}
         <div className="app-container"> 
-          {/* Основной контент */}
           <main className="main-content"> 
             <Routes>
-              {/* Публичные маршруты */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/" element={<HomePage />} />
 
-              {/* Защищенные маршруты */}
               <Route 
                 path="/projects" 
                 element={
@@ -41,7 +36,7 @@ function AppRoutes() {
                 } 
               />
               <Route 
-                path="/projects/:id" 
+                path="/projects/:projectId" 
                 element={
                   <PrivateRoute>
                     <ProjectEditor />

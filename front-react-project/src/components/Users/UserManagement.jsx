@@ -116,7 +116,7 @@ const UserManagement = () => {
                     <td>{user.id}</td>
                     <td>{user.username}</td>
                     <td>{user.email}</td>
-                    <td>{user.is_staff ? 'Администратор' : 'Сотрудник'}</td>
+                    <td>{user.is_staff && user.is_superuser ? 'Администратор' : 'Сотрудник'}</td>
                     <td>
                       {canDeleteUser(user.id) && (
                         <button

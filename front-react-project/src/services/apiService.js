@@ -1,9 +1,5 @@
 const API_BASE_URL = 'http://localhost:8000';
 
-/**
- * Базовый класс для работы с API.
- * Содержит общие методы для выполнения HTTP-запросов.
- */
 class ApiService {
   constructor() {
     this.baseUrl = import.meta.env.VITE_API_URL || API_BASE_URL;
@@ -12,9 +8,6 @@ class ApiService {
     };
   }
 
-  /**
-   * Получает CSRF токен из куки
-   */
   getCsrfToken() {
     const name = 'csrftoken';
     let cookieValue = null;
@@ -31,9 +24,7 @@ class ApiService {
     return cookieValue;
   }
 
-  /**
-   * Обновляет заголовки запроса
-   */
+
   updateHeaders() {
     const csrfToken = this.getCsrfToken();
     if (csrfToken) {
@@ -41,9 +32,7 @@ class ApiService {
     }
   }
 
-  /**
-   * Проверяет статус аутентификации пользователя
-   */
+
   async isAuthenticated() {
     try {
       const response = await this.get('/api/auth/user/');
@@ -53,12 +42,9 @@ class ApiService {
     }
   }
 
-  /**
-   * Выполняет вход пользователя
-   */
+
   async login(username, password) {
     try {
-      // Сначала получаем CSRF токен
       await this.get('/api/auth/csrf/');
       
       const response = await this.post('/api/auth/login/', { username, password });
@@ -69,9 +55,7 @@ class ApiService {
     }
   }
 
-  /**
-   * Выполняет выход пользователя
-   */
+
   async logout() {
     try {
       await this.post('/api/auth/logout/');
@@ -81,44 +65,27 @@ class ApiService {
     }
   }
 
-  /**
-   * Обрабатывает ответ от сервера
-   */
   async handleResponse(response) {
-    const contentType = response.headers.get('content-type');
-    
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       const error = new Error('HTTP error');
       error.status = response.status;
-      
-      try {
-        if (contentType && contentType.includes('application/json')) {
-          error.data = await response.json();
-        } else {
-          error.data = await response.text();
-        }
-      } catch {
-        error.data = 'Failed to parse error response';
-      }
-      
+      error.response = {
+        status: response.status,
+        data: errorData,
+        headers: response.headers
+      };
       throw error;
     }
-
-    // Обработка успешного ответа
-    if (!contentType) {
-      return null;
-    }
     
-    if (contentType.includes('application/json')) {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
       return response.json();
     }
     
-    return response.text();
+    return { success: true };
   }
 
-  /**
-   * Выполняет GET-запрос к указанному эндпоинту
-   */
   async get(endpoint, params = {}) {
     try {
       this.updateHeaders();
@@ -138,29 +105,22 @@ class ApiService {
     }
   }
 
-  /**
-   * Выполняет POST-запрос к указанному эндпоинту
-   */
   async post(endpoint, data) {
     try {
       this.updateHeaders();
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(this.baseUrl + endpoint, {
         method: 'POST',
         headers: this.headers,
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: JSON.stringify(data)
       });
-
-      return this.handleResponse(response);
+      return await this.handleResponse(response);
     } catch (error) {
-      console.error('POST request failed:', error);
+      console.error(`Ошибка POST запроса к ${endpoint}:`, error);
       throw error;
     }
   }
 
-  /**
-   * Выполняет PUT-запрос к указанному эндпоинту
-   */
   async put(endpoint, data) {
     try {
       this.updateHeaders();
@@ -178,9 +138,6 @@ class ApiService {
     }
   }
 
-  /**
-   * Выполняет PATCH-запрос к указанному эндпоинту
-   */
   async patch(endpoint, data) {
     try {
       this.updateHeaders();
@@ -198,9 +155,6 @@ class ApiService {
     }
   }
 
-  /**
-   * Выполняет DELETE-запрос к указанному эндпоинту
-   */
   async delete(endpoint) {
     try {
       this.updateHeaders();

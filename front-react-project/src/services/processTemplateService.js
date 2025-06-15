@@ -1,12 +1,6 @@
 import apiService from './apiService';
 
-/**
- * Сервис для управления шаблонами бизнес-процессов
- */
 class ProcessTemplateService {
-  /**
-   * Базовый эндпоинт для API шаблонов процессов
-   */
   constructor() {
     this.endpoint = '/process-templates';
   }
@@ -26,7 +20,7 @@ class ProcessTemplateService {
    * @returns {Promise<Object>} - Данные шаблона
    */
   async getById(id) {
-    return apiService.get(`${this.endpoint}/${id}`);
+    return apiService.get(`${this.endpoint}/${id}/`);
   }
 
   /**
@@ -73,7 +67,7 @@ class ProcessTemplateService {
    * @returns {Promise<Array>} - Массив этапов шаблона
    */
   async getStages(id) {
-    return apiService.get(`${this.endpoint}/${id}/stages`);
+    return apiService.get(`${this.endpoint}/${id}/stages/`);
   }
 
   /**
