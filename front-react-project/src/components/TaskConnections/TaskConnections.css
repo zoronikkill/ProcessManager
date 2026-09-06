@@ -1,0 +1,12 @@
+.connections-svg {
+    z-index: 1;
+}
+
+.connections-svg path {
+    transition: all 0.3s ease;
+}
+
+.connections-svg path:hover {
+    stroke-width: 3;
+    filter: drop-shadow(0 0 2px rgba(92, 47, 145, 0.5));
+}

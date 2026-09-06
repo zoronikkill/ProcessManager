@@ -1,0 +1,54 @@
+# --- OS Generated Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- Python ---
+# Virtual Environments
+venv/
+.venv/
+env/
+.env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+*.log
+db.sqlite3
+/media/
+
+# --- Node.js ---
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Dependency directories
+node_modules/
+
+# --- Editor/IDE specific ---
+.vscode/
+.idea/
+
+# --- Project Specific ---
+# Documents and presentations
+*.docx
+*.pptx
+*.pdf
+
+# Design files
+figma_images/
+
+# Temporary test files
+test-auth.html 

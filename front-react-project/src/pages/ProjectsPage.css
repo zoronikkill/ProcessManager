@@ -1,0 +1,117 @@
+.projects-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.projects-header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.projects-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.search-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 250px;
+}
+
+.button {
+  padding: 8px 16px;
+  background-color: #5c2f91;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: #4a2573;
+}
+
+.button.danger {
+  background-color: #dc3545;
+}
+
+.button.danger:hover {
+  background-color: #c82333;
+}
+
+.employees-btn {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.employees-btn:hover {
+  background-color: #218838;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.project-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.project-card h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 15px;
+}
+
+.project-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
